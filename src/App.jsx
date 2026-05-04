@@ -10,9 +10,8 @@ import ModulesLayout from "./layout/ModulesLayout";
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { theme } from "./theme";
+import FamilyRegistry from "./pages/modules/family-registry/FamilyRegistry";
 
-// Placeholder components for future modules
-const Familias = () => <div>Registro de familias</div>;
 const Beneficios = () => <div>Beneficios sociales</div>;
 const Proyectos = () => <div>Proyectos comunitarios</div>;
 const Constancias = () => <div>Constancias</div>;
@@ -29,7 +28,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route element={<ModulesLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/familias" element={<Familias />} />
+            <Route path="/family-registry" element={<FamilyRegistry />} />
             <Route path="/beneficios" element={<Beneficios />} />
             <Route path="/proyectos" element={<Proyectos />} />
             <Route path="/constancias" element={<Constancias />} />

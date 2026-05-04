@@ -17,12 +17,14 @@ import {
   useTheme,
 } from "@mui/material";
 import brand from "../../assets/brand.svg";
+import { useNavigate } from "react-router-dom";
 
 function MenuItemsDrawer() {
       const theme = useTheme();
+      const navigate = useNavigate()
   const menuItems = [
     { text: "Dashboard", icon: <BiSolidDashboard />, path: "/dashboard" },
-    { text: "Registro de familias", icon: <FaUsers />, path: "/familias" },
+    { text: "Registro de familias", icon: <FaUsers />, path: "/family-registry" },
     {
       text: "Beneficios sociales",
       icon: <FaHandsHelping />,
@@ -53,7 +55,7 @@ function MenuItemsDrawer() {
 
       <List>
         {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding>
+          <ListItem key={item.text} disablePadding onClick={() => navigate(item.path)}>
             <ListItemButton>
               <ListItemIcon sx={{ color: theme.palette.text.secondary }}>
                 {item.icon}
