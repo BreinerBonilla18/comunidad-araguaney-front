@@ -1,20 +1,44 @@
-import "./App.css";
-import { BiWorld } from "react-icons/bi";
-import Stack from "@mui/material/Stack";
-import Button from "@mui/material/Button";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import Login from "./pages/auth/Login";
+import Dashboard from "./pages/modules/dashboard/Dashboard";
+import ModulesLayout from "./layout/ModulesLayout";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { theme } from "./theme";
+
+// Placeholder components for future modules
+const Familias = () => <div>Registro de familias</div>;
+const Beneficios = () => <div>Beneficios sociales</div>;
+const Proyectos = () => <div>Proyectos comunitarios</div>;
+const Constancias = () => <div>Constancias</div>;
+const Documentos = () => <div>Documentos</div>;
+const Finanzas = () => <div>Finanzas</div>;
 
 function App() {
   return (
-    <>
-      <h1 class="text-3xl font-bold underline">
-        <BiWorld /> Hello world!
-      </h1>
-      <Stack spacing={2} direction="row">
-        <Button variant="text">Text</Button>
-        <Button variant="contained">Contained</Button>
-        <Button variant="outlined">Outlined</Button>
-      </Stack>
-    </>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/login" element={<Login />} />
+          <Route element={<ModulesLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/familias" element={<Familias />} />
+            <Route path="/beneficios" element={<Beneficios />} />
+            <Route path="/proyectos" element={<Proyectos />} />
+            <Route path="/constancias" element={<Constancias />} />
+            <Route path="/documentos" element={<Documentos />} />
+            <Route path="/finanzas" element={<Finanzas />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 

@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #f59e0b;
+  --color-brand-dark: #d97706;
+  --color-surface-bg: #030712;
+  --color-surface-card: #111827;
+  --color-surface-border: #1f2937;
+  --color-surface-input-border: #4b5563;
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #9ca3af;
+  --radius-card: 1rem;
+}
