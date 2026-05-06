@@ -1,34 +1,23 @@
+/* ------------ MUI Components --------------*/
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
-  IconButton,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from "@mui/material";
+/* ----------------- hooks ----------------- */
 import { useMemo, useState } from "react";
-import {
-  FaEdit,
-  FaFileCsv,
-  FaFilePdf,
-  FaPlus,
-  FaRegTrashAlt,
-  FaUsers,
-} from "react-icons/fa";
-
-function normalizeText(value) {
-  return (value ?? "").toString().trim();
-}
+/* ----------------- icons ----------------- */
+import { FaFileCsv, FaFilePdf, FaPlus, FaUsers } from "react-icons/fa";
+/* ----------------- utils ----------------- */
+import { normalizeText } from "../../../utils/functions";
+/* --------------- components -------------- */
+import MemberManagementModal from "./modals/MemberManagementModal";
+import FamilyHeadManagement from "./modals/FamilyHeadManagement";
+import TableFamilyHead from "./components/TableFamilyHead";
+import TableMembers from "./components/TableMembers";
 
 const emptyHeadForm = {
   fullName: "",
@@ -95,7 +84,7 @@ function FamilyRegistry() {
         ],
       },
     ],
-    []
+    [],
   );
   const [query, setQuery] = useState("");
 
@@ -189,7 +178,7 @@ function FamilyRegistry() {
       <Box className="flex flex-col gap-4">
         <Box className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <Box className="flex items-center gap-2">
-            <FaUsers />
+            <FaUsers size={24} className="text-brand-primary" />
             <Typography variant="h5" sx={{ fontWeight: "bold" }}>
               Registro de familias
             </Typography>
@@ -202,7 +191,7 @@ function FamilyRegistry() {
               onClick={() => {}}
               disabled={allMembers.length === 0}
             >
-              Exportar Excel (CSV)
+              Exportar Excel
             </Button>
             <Button
               variant="outlined"
@@ -235,240 +224,36 @@ function FamilyRegistry() {
             <Divider />
 
             <Box className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Paper className="p-3" variant="outlined">
-                <Box className="flex items-center justify-between gap-2 mb-2">
-                  <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                    Jefes de familia
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Total: {filteredFamilies.length}
-                  </Typography>
-                </Box>
+              <TableFamilyHead
+                filteredFamilies={filteredFamilies}
+                selectedFamilyId={selectedFamilyId}
+                setSelectedFamilyId={setSelectedFamilyId}
+                openEditHead={openEditHead}
+              />
 
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Jefe</TableCell>
-                      <TableCell>Cédula</TableCell>
-                      <TableCell>Miembros</TableCell>
-                      <TableCell align="right">Acciones</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredFamilies.map((family) => {
-                      const isSelected = family.id === selectedFamilyId;
-                      const membersCount = Array.isArray(family.members) ? family.members.length : 0;
-                      return (
-                        <TableRow
-                          key={family.id}
-                          hover
-                          selected={isSelected}
-                          onClick={() => setSelectedFamilyId(family.id)}
-                          sx={{ cursor: "pointer" }}
-                        >
-                          <TableCell>{family?.head?.fullName ?? ""}</TableCell>
-                          <TableCell>{family?.head?.documentId ?? ""}</TableCell>
-                          <TableCell>{membersCount}</TableCell>
-                          <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                            <IconButton
-                              size="small"
-                              aria-label="Editar"
-                              onClick={() => openEditHead(family)}
-                            >
-                              <FaEdit />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              aria-label="Eliminar"
-                              onClick={() => {}}
-                            >
-                              <FaRegTrashAlt />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {filteredFamilies.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center">
-                          No hay registros
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </Paper>
-
-              <Paper className="p-3" variant="outlined">
-                <Box className="flex items-center justify-between gap-2 mb-2">
-                  <Box className="flex flex-col">
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
-                      Miembros del grupo familiar
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {selectedFamily
-                        ? `Jefe: ${selectedFamily?.head?.fullName ?? ""}`
-                        : "Selecciona un jefe de familia"}
-                    </Typography>
-                  </Box>
-                  <Button
-                    variant="contained"
-                    startIcon={<FaPlus />}
-                    onClick={openCreateMember}
-                    disabled={!selectedFamily}
-                  >
-                    Nuevo miembro
-                  </Button>
-                </Box>
-
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Nombre</TableCell>
-                      <TableCell>Cédula</TableCell>
-                      <TableCell>Rol</TableCell>
-                      <TableCell align="right">Acciones</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(selectedFamily?.members ?? []).map((member) => (
-                      <TableRow key={member.id} hover>
-                        <TableCell>{member.fullName ?? ""}</TableCell>
-                        <TableCell>{member.documentId ?? ""}</TableCell>
-                        <TableCell>{member.role ?? ""}</TableCell>
-                        <TableCell align="right">
-                          <IconButton size="small" onClick={() => openEditMember(member)}>
-                            <FaEdit />
-                          </IconButton>
-                          <IconButton size="small" onClick={() => {}}>
-                            <FaRegTrashAlt />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {selectedFamily && (selectedFamily.members ?? []).length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center">
-                          Este grupo familiar no tiene miembros
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                    {!selectedFamily ? (
-                      <TableRow>
-                        <TableCell colSpan={4} align="center">
-                          Selecciona un jefe para ver/gestionar miembros
-                        </TableCell>
-                      </TableRow>
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </Paper>
+              <TableMembers
+                openCreateMember={openCreateMember}
+                selectedFamily={selectedFamily}
+                openEditMember={openEditMember}
+              />
             </Box>
           </Box>
         </Paper>
       </Box>
+      <FamilyHeadManagement
+        headDialogOpen={headDialogOpen}
+        headDialogMode={headDialogMode}
+        setHeadDialogOpen={setHeadDialogOpen}
+        headForm={headForm}
+        setHeadForm={setHeadForm}
+      />
 
-      <Dialog open={headDialogOpen} onClose={() => setHeadDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>
-          {headDialogMode === "create" ? "Registrar jefe de familia" : "Editar jefe de familia"}
-        </DialogTitle>
-        <DialogContent className="flex flex-col gap-3 pt-3">
-          <TextField
-            label="Nombre y apellido"
-            value={headForm.fullName}
-            onChange={(e) => setHeadForm((p) => ({ ...p, fullName: e.target.value }))}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Cédula"
-            value={headForm.documentId}
-            onChange={(e) => setHeadForm((p) => ({ ...p, documentId: e.target.value }))}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Teléfono"
-            value={headForm.phone}
-            onChange={(e) => setHeadForm((p) => ({ ...p, phone: e.target.value }))}
-            fullWidth
-          />
-          <TextField
-            label="Dirección"
-            value={headForm.address}
-            onChange={(e) => setHeadForm((p) => ({ ...p, address: e.target.value }))}
-            fullWidth
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={() => setHeadDialogOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => setHeadDialogOpen(false)}
-            disabled={!normalizeText(headForm.fullName) || !normalizeText(headForm.documentId)}
-          >
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={memberDialogOpen}
-        onClose={() => setMemberDialogOpen(false)}
-        fullWidth
-        maxWidth="sm"
-      >
-        <DialogTitle>Registrar / editar miembro</DialogTitle>
-
-        <DialogContent className="flex flex-col gap-3 pt-3">
-          <TextField
-            label="Nombre y apellido"
-            value={memberForm.fullName}
-            onChange={(e) => setMemberForm((p) => ({ ...p, fullName: e.target.value }))}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Cédula"
-            value={memberForm.documentId}
-            onChange={(e) => setMemberForm((p) => ({ ...p, documentId: e.target.value }))}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Teléfono"
-            value={memberForm.phone}
-            onChange={(e) => setMemberForm((p) => ({ ...p, phone: e.target.value }))}
-            fullWidth
-          />
-          <TextField
-            label="Rol (ej: Miembro, Adulto mayor, Niño...)"
-            value={memberForm.role}
-            onChange={(e) => setMemberForm((p) => ({ ...p, role: e.target.value }))}
-            fullWidth
-          />
-          <TextField
-            label="Parentesco (ej: Hijo, Esposa, Hermano...)"
-            value={memberForm.relationship}
-            onChange={(e) => setMemberForm((p) => ({ ...p, relationship: e.target.value }))}
-            fullWidth
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button variant="outlined" onClick={() => setMemberDialogOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => setMemberDialogOpen(false)}
-            disabled={!normalizeText(memberForm.fullName) || !normalizeText(memberForm.documentId)}
-          >
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <MemberManagementModal
+        memberDialogOpen={memberDialogOpen}
+        setMemberDialogOpen={setMemberDialogOpen}
+        setMemberForm={setMemberForm}
+        memberForm={memberForm}
+      />
     </Box>
   );
 }

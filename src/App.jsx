@@ -11,12 +11,16 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { theme } from "./theme";
 import FamilyRegistry from "./pages/modules/family-registry/FamilyRegistry";
+import SocialBenefits from "./pages/modules/social-benefits/SocialBenefits";
 
-const Beneficios = () => <div>Beneficios sociales</div>;
-const Proyectos = () => <div>Proyectos comunitarios</div>;
-const Constancias = () => <div>Constancias</div>;
-const Documentos = () => <div>Documentos</div>;
-const Finanzas = () => <div>Finanzas</div>;
+import Certificates from "./pages/modules/certificates/Certificates";
+import Projects from "./pages/modules/community-projects/Projects";
+import Documents from "./pages/modules/documents/Documents";
+import Finances from "./pages/modules/finances/Finances";
+
+
+
+
 
 function App() {
   return (
@@ -29,11 +33,11 @@ function App() {
           <Route element={<ModulesLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/family-registry" element={<FamilyRegistry />} />
-            <Route path="/beneficios" element={<Beneficios />} />
-            <Route path="/proyectos" element={<Proyectos />} />
-            <Route path="/constancias" element={<Constancias />} />
-            <Route path="/documentos" element={<Documentos />} />
-            <Route path="/finanzas" element={<Finanzas />} />
+            <Route path="/beneficios" element={<SocialBenefits />} />
+            <Route path="/proyectos" element={<Projects />} />
+            <Route path="/constancias" element={<Certificates />} />
+            <Route path="/documentos" element={<Documents />} />
+            <Route path="/finanzas" element={<Finances />} />
           </Route>
         </Routes>
       </Router>
