@@ -6,12 +6,11 @@ import {
   Paper,
   TextField,
   Typography,
-  InputAdornment,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo } from "react";
 /* ----------------- icons ----------------- */
-import { FaHandHoldingHeart, FaSearch, FaPlay, FaStop } from "react-icons/fa";
+import { FaHandHoldingHeart, FaPlay, FaStop } from "react-icons/fa";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
 /* --------------- components -------------- */
@@ -177,7 +176,7 @@ function SocialBenefits() {
           </Box>
         )}
 
-        <Paper className="p-4 shadow-sm border border-brand-primary/20 relative">
+        <Paper className="p-4 relative">
           <Box className="flex flex-col gap-4">
             <TextField
               fullWidth
@@ -185,13 +184,6 @@ function SocialBenefits() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={!isJornadaActive}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FaSearch className="text-brand-primary" />
-                  </InputAdornment>
-                ),
-              }}
             />
 
             <Divider />
@@ -210,7 +202,7 @@ function SocialBenefits() {
             </Paper>
           </Box>
           {!isJornadaActive && (
-            <Box className="absolute inset-0 z-10 bg-black/50 flex flex-col items-center justify-center rounded-lg backdrop-blur-[5px]">
+            <Box className="absolute inset-0 z-10 bg-black/50 flex flex-col items-center justify-center rounded-sm backdrop-blur-[5px]">
               <Typography
                 variant="h6"
                 className="text-white font-bold px-4 py-2 bg-black/90 rounded-lg border border-white/10 shadow-xl"

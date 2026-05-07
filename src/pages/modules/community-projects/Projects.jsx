@@ -6,7 +6,6 @@ import {
   Paper,
   TextField,
   Typography,
-  InputAdornment,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo } from "react";
@@ -14,7 +13,6 @@ import { useState, useMemo } from "react";
 import {
   FaProjectDiagram,
   FaFilePdf,
-  FaSearch,
   FaPlus,
   FaFileCsv,
 } from "react-icons/fa";
@@ -126,20 +124,13 @@ function Projects() {
           </Box>
         </Box>
 
-        <Paper className="p-4 shadow-sm border border-brand-primary/20">
+        <Paper className="p-4">
           <Box className="flex flex-col gap-4">
             <TextField
               fullWidth
               label="Buscar proyectos por nombre, descripción o estado..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FaSearch className="text-brand-primary" />
-                  </InputAdornment>
-                ),
-              }}
             />
             <Divider />
             <Paper className="p-3" variant="outlined">

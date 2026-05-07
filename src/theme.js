@@ -38,6 +38,13 @@ export const theme = createTheme({
         },
       },
     },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none', // Elimina el overlay grisáceo que MUI añade en modo oscuro
+        },
+      },
+    },
     MuiTextField: {
       styleOverrides: {
         root: {

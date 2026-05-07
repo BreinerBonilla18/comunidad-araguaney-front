@@ -16,6 +16,7 @@ function TableFamilyHead({
   selectedFamilyId,
   setSelectedFamilyId,
   openEditHead,
+  openDeleteHead,
 }) {
   return (
     <Paper className="p-3" variant="outlined">
@@ -33,16 +34,12 @@ function TableFamilyHead({
           <TableRow>
             <TableCell>Jefe</TableCell>
             <TableCell>Cédula</TableCell>
-            <TableCell>Miembros</TableCell>
             <TableCell align="right">Acciones</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {filteredFamilies.map((family) => {
             const isSelected = family.id === selectedFamilyId;
-            const membersCount = Array.isArray(family.members)
-              ? family.members.length
-              : 0;
             return (
               <TableRow
                 key={family.id}
@@ -53,7 +50,6 @@ function TableFamilyHead({
               >
                 <TableCell>{family?.head?.fullName ?? ""}</TableCell>
                 <TableCell>{family?.head?.documentId ?? ""}</TableCell>
-                <TableCell>{membersCount}</TableCell>
                 <TableCell align="right" onClick={(e) => e.stopPropagation()}>
                   <IconButton
                     size="small"
@@ -65,7 +61,7 @@ function TableFamilyHead({
                   <IconButton
                     size="small"
                     aria-label="Eliminar"
-                    onClick={() => {}}
+                    onClick={() => openDeleteHead(family)}
                   >
                     <FaRegTrashAlt />
                   </IconButton>

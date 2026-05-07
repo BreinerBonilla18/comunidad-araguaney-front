@@ -5,12 +5,11 @@ import {
   Paper,
   TextField,
   Typography,
-  InputAdornment,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo } from "react";
 /* ----------------- icons ----------------- */
-import { FaCertificate, FaSearch } from "react-icons/fa";
+import { FaCertificate } from "react-icons/fa";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
 /* --------------- components -------------- */
@@ -100,13 +99,6 @@ function Certificates() {
               variant="outlined"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <FaSearch />
-                    </InputAdornment>
-                  ),
-              }}
             />
 
             <Divider />

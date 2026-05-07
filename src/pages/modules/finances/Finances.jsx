@@ -6,7 +6,6 @@ import {
   Paper,
   TextField,
   Typography,
-  InputAdornment,
   MenuItem,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
@@ -16,7 +15,6 @@ import {
   FaWallet,
   FaFilePdf,
   FaFileCsv,
-  FaSearch,
   FaPlus,
 } from "react-icons/fa";
 /* ----------------- utils ----------------- */
@@ -156,7 +154,7 @@ function Finances() {
             />
           ))}
         </Box>
-        <Paper className="p-4 shadow-sm border border-brand-primary/20">
+        <Paper className="p-4">
           <Box className="flex flex-col gap-4">
             <Box className="flex flex-col md:flex-row gap-3">
               <TextField
@@ -164,13 +162,6 @@ function Finances() {
                 label="Buscar por descripción o categoría..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <FaSearch className="text-brand-primary" />
-                    </InputAdornment>
-                  ),
-                }}
               />
               <TextField
                 select

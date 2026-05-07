@@ -18,9 +18,9 @@ function EndBenefitDayModal({
   return (
     <Dialog open={openEndModal} onClose={() => setOpenEndModal(false)}>
       <DialogTitle sx={{ fontWeight: "bold" }}>Jornada Finalizada</DialogTitle>
-      <DialogContent>
+      <DialogContent dividers>
         <Box className="flex flex-col items-center gap-4 py-4">
-          <FaCheckCircle size={48} className="text-green-500" />
+          <FaCheckCircle size={64} className="text-green-500" />
           <Typography variant="body1" align="center">
             Se han completado <strong>{stats.delivered}</strong> entregas de un
             total de <strong>{stats.total}</strong>.

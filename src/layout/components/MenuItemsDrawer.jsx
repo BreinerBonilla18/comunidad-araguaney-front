@@ -5,9 +5,12 @@ import {
   FaHandsHelping,
   FaProjectDiagram,
   FaUsers,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import { BiSolidDashboard } from "react-icons/bi";
 import {
+  Box,
+  Divider,
   List,
   ListItem,
   ListItemButton,
@@ -20,11 +23,22 @@ import brand from "../../assets/brand.svg";
 import { useNavigate } from "react-router-dom";
 
 function MenuItemsDrawer() {
-      const theme = useTheme();
-      const navigate = useNavigate()
+  const theme = useTheme();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login", { replace: true });
+  };
+
   const menuItems = [
     { text: "Dashboard", icon: <BiSolidDashboard />, path: "/dashboard" },
-    { text: "Registro de familias", icon: <FaUsers />, path: "/family-registry" },
+    {
+      text: "Registro de familias",
+      icon: <FaUsers />,
+      path: "/family-registry",
+    },
     {
       text: "Beneficios sociales",
       icon: <FaHandsHelping />,
@@ -53,20 +67,40 @@ function MenuItemsDrawer() {
         </div>
       </Toolbar>
 
-      <List>
-        {menuItems.map((item) => (
-          <ListItem key={item.text} disablePadding onClick={() => navigate(item.path)}>
-            <ListItemButton>
-              <ListItemIcon sx={{ color: theme.palette.text.secondary }}>
-                {item.icon}
-              </ListItemIcon>
-              <ListItemText
-                primary={item.text}
-                sx={{ color: theme.palette.text.primary }}
-              />
-            </ListItemButton>
-          </ListItem>
-        ))}
+      <List sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 80px)" }}>
+        <Box sx={{ flex: 1 }}>
+          {menuItems.map((item) => (
+            <ListItem
+              key={item.text}
+              disablePadding
+              onClick={() => navigate(item.path)}
+            >
+              <ListItemButton>
+                <ListItemIcon sx={{ color: theme.palette.text.secondary }}>
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  sx={{ color: theme.palette.text.primary }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </Box>
+
+        <Divider />
+
+        <ListItem disablePadding onClick={handleLogout}>
+          <ListItemButton sx={{ "&:hover": { color: "error.main" } }}>
+            <ListItemIcon sx={{ color: "error.main" }}>
+              <FaSignOutAlt />
+            </ListItemIcon>
+            <ListItemText
+              primary="Cerrar sesión"
+              sx={{ color: "error.main", fontWeight: "bold" }}
+            />
+          </ListItemButton>
+        </ListItem>
       </List>
     </div>
   );

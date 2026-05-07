@@ -12,7 +12,7 @@ import {
 } from "@mui/material";
 import { FaEdit, FaPlus, FaRegTrashAlt } from "react-icons/fa";
 
-function TableMembers({ selectedFamily, openCreateMember, openEditMember }) {
+function TableMembers({ selectedFamily, openCreateMember, openEditMember, openDeleteMember }) {
   return (
     <Paper className="p-3" variant="outlined">
       <Box className="flex items-center justify-between gap-2 mb-2">
@@ -41,7 +41,6 @@ function TableMembers({ selectedFamily, openCreateMember, openEditMember }) {
           <TableRow>
             <TableCell>Nombre</TableCell>
             <TableCell>Cédula</TableCell>
-            <TableCell>Rol</TableCell>
             <TableCell align="right">Acciones</TableCell>
           </TableRow>
         </TableHead>
@@ -50,12 +49,11 @@ function TableMembers({ selectedFamily, openCreateMember, openEditMember }) {
             <TableRow key={member.id} hover>
               <TableCell>{member.fullName ?? ""}</TableCell>
               <TableCell>{member.documentId ?? ""}</TableCell>
-              <TableCell>{member.role ?? ""}</TableCell>
               <TableCell align="right">
                 <IconButton size="small" onClick={() => openEditMember(member)}>
                   <FaEdit />
                 </IconButton>
-                <IconButton size="small" onClick={() => {}}>
+                <IconButton size="small" onClick={() => openDeleteMember(member)}>
                   <FaRegTrashAlt />
                 </IconButton>
               </TableCell>

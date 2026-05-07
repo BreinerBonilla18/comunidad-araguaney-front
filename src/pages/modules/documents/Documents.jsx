@@ -6,12 +6,11 @@ import {
   Paper,
   TextField,
   Typography,
-  InputAdornment,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo } from "react";
 /* ----------------- icons ----------------- */
-import { FaFileAlt, FaSearch, FaPlus } from "react-icons/fa";
+import { FaFileAlt, FaPlus } from "react-icons/fa";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
 /* --------------- components -------------- */
@@ -105,7 +104,7 @@ function Documents() {
           </Button>
         </Box>
 
-        <Paper className="p-4 shadow-sm border border-brand-primary/20">
+        <Paper className="p-4">
           <Box className="flex flex-col gap-4">
             {/* Search */}
             <TextField
@@ -113,13 +112,6 @@ function Documents() {
               label="Buscar documentos por nombre, categoría o tipo..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <FaSearch className="text-brand-primary" />
-                  </InputAdornment>
-                ),
-              }}
             />
 
             <Divider />
