@@ -20,6 +20,7 @@ import {
   validateBirthDate,
   validateFullName,
   validateVenezuelanDocumentId,
+  validateAddress,
 } from "../../../../utils/functions";
 
 function FamilyHeadManagement({
@@ -36,12 +37,14 @@ function FamilyHeadManagement({
     ? "Este campo es requerido"
     : "";
   const birthDateError = validateBirthDate(headForm.birthDate);
+  const addressError = validateAddress(headForm.address);
 
   const hasErrors =
     !!fullNameError ||
     !!documentIdError ||
     !!genderError ||
-    !!birthDateError;
+    !!birthDateError ||
+    !!addressError;
 
   return (
     <Dialog
@@ -93,6 +96,7 @@ function FamilyHeadManagement({
             onChange={(e) =>
               setHeadForm((p) => ({ ...p, phone: e.target.value }))
             }
+            
             fullWidth
           />
           <TextField
@@ -101,7 +105,10 @@ function FamilyHeadManagement({
             onChange={(e) =>
               setHeadForm((p) => ({ ...p, address: e.target.value }))
             }
+            error={!!addressError}
+            helperText={addressError || ""}
             fullWidth
+            required
           />
           <FormControl fullWidth error={!!genderError}>
             <InputLabel id="head-gender-label">Género</InputLabel>

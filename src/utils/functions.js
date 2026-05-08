@@ -57,6 +57,12 @@ export function validateBirthDate(value) {
   return "";
 }
 
+export function validateAddress(value) {
+  const v = normalizeText(value);
+  if (!v) return "Este campo es requerido";
+  return "";
+}
+
 export function formatDate(dateString) {
   if (!dateString) return "";
   

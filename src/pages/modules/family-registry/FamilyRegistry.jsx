@@ -58,6 +58,12 @@ function FamilyRegistry() {
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
   const [query, setQuery] = useState("");
+  
+  // Pagination states
+  const [familyPage, setFamilyPage] = useState(0);
+  const [familyRowsPerPage, setFamilyRowsPerPage] = useState(10);
+  const [memberPage, setMemberPage] = useState(0);
+  const [memberRowsPerPage, setMemberRowsPerPage] = useState(10);
 
   // Modales de estatus
   const [successModal, setSuccessModal] = useState({ open: false, title: "", message: "" });
@@ -145,10 +151,37 @@ function FamilyRegistry() {
     return result;
   }, [families]);
 
-  const filteredFamilies = useMemo(() => {
+  const filteredAllMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
-    if (!q) return families;
+    const isSearching = !!q;
+    
+    if (isSearching) {
+      // Search mode: filter all members and apply pagination
+      const filtered = allMembers.filter((member) => {
+        return [member.fullName, member.documentId, member.phone, member.familyHeadName]
+          .filter(Boolean)
+          .some((v) => v.toString().toLowerCase().includes(q));
+      });
 
+      return filtered.slice(
+        memberPage * memberRowsPerPage,
+        memberPage * memberRowsPerPage + memberRowsPerPage
+      );
+    } else {
+      // Normal mode: show selected family members with pagination
+      const familyMembers = selectedFamily?.members ?? [];
+      return familyMembers.slice(
+        memberPage * memberRowsPerPage,
+        memberPage * memberRowsPerPage + memberRowsPerPage
+      );
+    }
+  }, [allMembers, selectedFamily, query, memberPage, memberRowsPerPage]);
+
+  // Total counts for pagination
+  const totalFilteredFamilies = useMemo(() => {
+    const q = normalizeText(query).toLowerCase();
+    if (!q) return families.length;
+    
     return families.filter((f) => {
       const head = f?.head ?? {};
       const members = Array.isArray(f?.members) ? f.members : [];
@@ -162,8 +195,81 @@ function FamilyRegistry() {
           .some((v) => v.toString().toLowerCase().includes(q));
       });
       return inHead || inMembers;
-    });
+    }).length;
   }, [families, query]);
+
+  const totalFilteredMembers = useMemo(() => {
+    const q = normalizeText(query).toLowerCase();
+    const isSearching = !!q;
+    
+    if (isSearching) {
+      // Search mode: count all filtered members
+      return allMembers.filter((member) => {
+        return [member.fullName, member.documentId, member.phone, member.familyHeadName]
+          .filter(Boolean)
+          .some((v) => v.toString().toLowerCase().includes(q));
+      }).length;
+    } else {
+      // Normal mode: count selected family members
+      return selectedFamily?.members?.length ?? 0;
+    }
+  }, [allMembers, selectedFamily, query]);
+
+  // Reset pagination when query changes
+  useEffect(() => {
+    setFamilyPage(0);
+    setMemberPage(0);
+  }, [query]);
+
+  // Reset member pagination when selected family changes (only in non-search mode)
+  useEffect(() => {
+    if (!query) {
+      setMemberPage(0);
+    }
+  }, [selectedFamily, query]);
+
+  // Pagination handlers
+  const handleFamilyPageChange = (event, newPage) => {
+    setFamilyPage(newPage);
+  };
+
+  const handleFamilyRowsPerPageChange = (event) => {
+    setFamilyRowsPerPage(parseInt(event.target.value, 10));
+    setFamilyPage(0);
+  };
+
+  const handleMemberPageChange = (event, newPage) => {
+    setMemberPage(newPage);
+  };
+
+  const handleMemberRowsPerPageChange = (event) => {
+    setMemberRowsPerPage(parseInt(event.target.value, 10));
+    setMemberPage(0);
+  };
+
+  const filteredFamilies = useMemo(() => {
+    const q = normalizeText(query).toLowerCase();
+    const filtered = !q ? families : families.filter((f) => {
+      const head = f?.head ?? {};
+      const members = Array.isArray(f?.members) ? f.members : [];
+      const inHead = [head.fullName, head.documentId, head.phone, head.address]
+        .filter(Boolean)
+        .some((v) => v.toString().toLowerCase().includes(q));
+
+      const inMembers = members.some((m) => {
+        return [m.fullName, m.documentId, m.phone, m.role, m.relationship]
+          .filter(Boolean)
+          .some((v) => v.toString().toLowerCase().includes(q));
+      });
+      return inHead || inMembers;
+    });
+
+    // Apply pagination to filtered results
+    return filtered.slice(
+      familyPage * familyRowsPerPage,
+      familyPage * familyRowsPerPage + familyRowsPerPage
+    );
+  }, [families, query, familyPage, familyRowsPerPage]);
 
   const handleSaveHead = async () => {
     try {
@@ -369,6 +475,11 @@ function FamilyRegistry() {
             <Box className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <TableFamilyHead
                 filteredFamilies={filteredFamilies}
+                totalCount={totalFilteredFamilies}
+                page={familyPage}
+                rowsPerPage={familyRowsPerPage}
+                onPageChange={handleFamilyPageChange}
+                onRowsPerPageChange={handleFamilyRowsPerPageChange}
                 selectedFamilyId={selectedFamilyId}
                 setSelectedFamilyId={(id) => {
                   setSelectedFamilyId(id);
@@ -381,6 +492,13 @@ function FamilyRegistry() {
               <TableMembers
                 openCreateMember={openCreateMember}
                 selectedFamily={selectedFamily}
+                filteredMembers={filteredAllMembers}
+                totalCount={totalFilteredMembers}
+                page={memberPage}
+                rowsPerPage={memberRowsPerPage}
+                onPageChange={handleMemberPageChange}
+                onRowsPerPageChange={handleMemberRowsPerPageChange}
+                query={query}
                 openEditMember={openEditMember}
                 openDeleteMember={openDeleteMember}
               />

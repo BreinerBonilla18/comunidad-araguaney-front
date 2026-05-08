@@ -7,12 +7,18 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TablePagination,
   Typography,
 } from "@mui/material";
 import { FaEdit, FaRegTrashAlt } from "react-icons/fa";
 
 function TableFamilyHead({
   filteredFamilies,
+  totalCount,
+  page,
+  rowsPerPage,
+  onPageChange,
+  onRowsPerPageChange,
   selectedFamilyId,
   setSelectedFamilyId,
   openEditHead,
@@ -20,16 +26,17 @@ function TableFamilyHead({
 }) {
   return (
     <Paper className="p-3" variant="outlined">
-      <Box className="flex items-center justify-between gap-2 mb-2">
+      <Box className="flex items-center justify-between gap-2 mb-7">
         <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
           Jefes de familia
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Total: {filteredFamilies.length}
+          Total: {totalCount}
         </Typography>
       </Box>
 
-      <Table size="small" stickyHeader>
+      <Box sx={{ height: 400, overflow: 'auto' }}>
+        <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
             <TableCell>Jefe</TableCell>
@@ -77,7 +84,21 @@ function TableFamilyHead({
             </TableRow>
           ) : null}
         </TableBody>
-      </Table>
+        </Table>
+      </Box>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={totalCount}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={onPageChange}
+        onRowsPerPageChange={onRowsPerPageChange}
+        labelRowsPerPage="Filas por página"
+        labelDisplayedRows={({ from, to, count }) =>
+          `${from}-${to} de ${count !== -1 ? count : `más de ${to}`}`
+        }
+      />
     </Paper>
   );
 }
