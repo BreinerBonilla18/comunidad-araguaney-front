@@ -35,14 +35,14 @@ function TableBeneficiaries({
             <TableCell>
               <Chip
                 icon={
-                  b.status === "entregado" ? (
+                  b.status === "delivered" ? (
                     <FaCheckCircle />
                   ) : (
                     <FaTimesCircle />
                   )
                 }
-                label={b.status === "entregado" ? "Entregado" : "Pendiente"}
-                color={b.status === "entregado" ? "success" : "default"}
+                label={b.status === "delivered" ? "Entregado" : "Pendiente"}
+                color={b.status === "delivered" ? "success" : "default"}
                 size="small"
                 variant="outlined"
               />
@@ -51,13 +51,13 @@ function TableBeneficiaries({
               <FormControlLabel
                 control={
                   <Checkbox
-                    checked={b.status === "entregado"}
-                    onChange={() => handleToggleStatus(b.id)}
+                    checked={b.status === "delivered"}
+                    onChange={() => handleToggleStatus(b.id, b.status)}
                     disabled={!isJornadaActive}
                   />
                 }
                 label={
-                  b.status === "entregado"
+                  b.status === "delivered"
                     ? "Marcar Pendiente"
                     : "Marcar Entregado"
                 }

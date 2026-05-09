@@ -17,7 +17,7 @@ function CertificateGenerator({ selectedResident }) {
     },
     {
       label: "Teléfono",
-      value: selectedResident?.phone,
+      value: selectedResident?.phone_number,
     },
   ];
 

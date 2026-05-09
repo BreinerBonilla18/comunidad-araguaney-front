@@ -1,4 +1,11 @@
-import { Box, Paper, Typography, Button, Divider } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  Divider,
+  LinearProgress,
+} from "@mui/material";
 import {
   FaUsers,
   FaProjectDiagram,
@@ -8,39 +15,90 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 import { Link } from "react-router-dom";
+/* ----------------- hooks ----------------- */
+import { useState, useEffect, useCallback, useMemo } from "react";
+/* ----------------- API ----------------- */
+import { getDashboardStats } from "../../../api/dashboard";
+import { getProjects } from "../../../api/projects";
+/* ----------------- Utils ----------------- */
+import { formatDate } from "../../../utils/functions";
 import brand from "../../../assets/brand.svg";
 
 function Dashboard() {
-  const stats = [
-    {
-      title: "Familias Registradas",
-      value: "156",
-      icon: <FaUsers size={24} />,
-      color: "#3b82f6",
-      link: "/family-registry",
-    },
-    {
-      title: "Proyectos Activos",
-      value: "4",
-      icon: <FaProjectDiagram size={24} />,
-      color: "#f59e0b",
-      link: "/proyectos",
-    },
-    {
-      title: "Documentos Almacenados",
-      value: "5",
-      icon: <FaFileAlt size={24} />,
-      color: "#10b981",
-      link: "/documentos",
-    },
-    {
-      title: "Saldo Comunitario",
-      value: "Bs 12,450",
-      icon: <FaWallet size={24} />,
-      color: "#8b5cf6",
-      link: "/finanzas",
-    },
-  ];
+  const [dashboardData, setDashboardData] = useState({
+    registered_families: 0,
+    active_projects: 0,
+    stored_documents: 0,
+    community_balance: 0,
+  });
+  const [ongoingProjects, setOngoingProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      debugger;
+      const [statsRes, projectsRes] = await Promise.all([
+        getDashboardStats(),
+        getProjects(),
+      ]);
+
+      if (statsRes.success) {
+        setDashboardData(statsRes.data);
+      }
+
+      if (projectsRes.success) {
+        const inProcess = projectsRes.data
+          .filter((p) => p.status === "in_progress")
+          .slice(0, 3);
+        setOngoingProjects(inProcess);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const statsList = useMemo(
+    () => [
+      {
+        title: "Familias Registradas",
+        value: dashboardData.registered_families,
+        icon: <FaUsers size={24} />,
+        color: "#3b82f6",
+        link: "/family-registry",
+      },
+      {
+        title: "Proyectos Activos",
+        value: dashboardData.active_projects,
+        icon: <FaProjectDiagram size={24} />,
+        color: "#f59e0b",
+        link: "/proyectos",
+      },
+      {
+        title: "Documentos Almacenados",
+        value: dashboardData.stored_documents,
+        icon: <FaFileAlt size={24} />,
+        color: "#10b981",
+        link: "/documentos",
+      },
+      {
+        title: "Saldo Comunitario",
+        value: `Bs ${dashboardData.community_balance.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+        })}`,
+        icon: <FaWallet size={24} />,
+        color: "#8b5cf6",
+        link: "/finanzas",
+      },
+    ],
+    [dashboardData],
+  );
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   return (
     <Box className="w-full">
@@ -66,8 +124,15 @@ function Dashboard() {
           className="absolute -bottom-10 -right-10 opacity-5 rotate-12"
         />
       </Box>
+
+      {loading && (
+        <Box sx={{ width: "100%", mb: 3 }}>
+          <LinearProgress color="primary" />
+        </Box>
+      )}
+
       <Box className="grid grid-cols-1 sm:grid-cols-4 gap-5 mb-8">
-        {stats.map((stat, index) => (
+        {statsList.map((stat, index) => (
           <Paper
             key={index}
             className="p-5 flex flex-col gap-2 hover:shadow-md transition-shadow cursor-default"
@@ -113,7 +178,7 @@ function Dashboard() {
       </Box>
 
       <Box className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <Paper className="p-6" sx={{ borderRadius: "1rem" }}>
+        <Paper className="p-6" sx={{ borderRadius: "1rem", minHeight: "390px" }}>
           <Box className="flex justify-between items-center mb-4">
             <Typography
               variant="h6"
@@ -132,25 +197,9 @@ function Dashboard() {
           </Box>
           <Divider sx={{ mb: 3 }} />
           <Box className="flex flex-col gap-4">
-            {[
-              {
-                name: "Iluminación Sector Centro",
-                progress: 75,
-                date: "10 Mar",
-              },
-              {
-                name: "Reparación de Tubería Bloque 3",
-                progress: 40,
-                date: "15 Feb",
-              },
-              {
-                name: "Pintura de Fachada Principal",
-                progress: 20,
-                date: "05 Mar",
-              },
-            ].map((proj, i) => (
+            {ongoingProjects.map((proj) => (
               <Box
-                key={i}
+                key={proj.id}
                 className="p-4 rounded-xl border border-brand-primary flex justify-between items-center"
               >
                 <Box>
@@ -158,16 +207,21 @@ function Dashboard() {
                     {proj.name}
                   </Typography>
                   <Typography variant="caption" className="text-brand-primary">
-                    Iniciado el {proj.date}
+                    Iniciado el {formatDate(proj.start_date)}
                   </Typography>
                 </Box>
               </Box>
             ))}
+            {ongoingProjects.length === 0 && !loading && (
+              <Typography variant="body2" color="text.secondary" align="center">
+                No hay proyectos en curso actualmente.
+              </Typography>
+            )}
           </Box>
         </Paper>
         <Paper
           className="p-6 h-full flex flex-col"
-          sx={{ borderRadius: "1rem" }}
+          sx={{ borderRadius: "1rem", minHeight: "390px" }}
         >
           <Typography variant="h6" sx={{ fontWeight: "bold", mb: 4 }}>
             Atajos Rápidos
@@ -214,14 +268,14 @@ function Dashboard() {
                   borderColor: action.color,
                   backgroundColor: `${action.color}05`,
                   "&:hover": {
-                    backgroundColor: `${action.color}15`
+                    backgroundColor: `${action.color}15`,
                   },
                 }}
               >
-                <Box sx={{ color: action.color, fontSize: 24 }}>{action.icon}</Box>
-                <Typography variant="caption">
-                  {action.label}
-                </Typography>
+                <Box sx={{ color: action.color, fontSize: 24 }}>
+                  {action.icon}
+                </Box>
+                <Typography variant="caption">{action.label}</Typography>
               </Button>
             ))}
           </Box>

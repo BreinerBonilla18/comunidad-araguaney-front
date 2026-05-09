@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -7,43 +6,26 @@ import {
   DialogTitle,
   Typography,
 } from "@mui/material";
-import { FaCheckCircle, FaFileDownload } from "react-icons/fa";
 
-function EndBenefitDayModal({
-  setOpenEndModal,
-  resetJornada,
-  openEndModal,
-  stats,
-}) {
+function EndBenefitDayModal({ openEndModal, setOpenEndModal, onConfirm }) {
   return (
     <Dialog open={openEndModal} onClose={() => setOpenEndModal(false)}>
-      <DialogTitle sx={{ fontWeight: "bold" }}>Jornada Finalizada</DialogTitle>
+      <DialogTitle sx={{ fontWeight: "bold" }}>Finalizar Jornada</DialogTitle>
       <DialogContent dividers>
-        <Box className="flex flex-col items-center gap-4 py-4">
-          <FaCheckCircle size={64} className="text-green-500" />
-          <Typography variant="body1" align="center">
-            Se han completado <strong>{stats.delivered}</strong> entregas de un
-            total de <strong>{stats.total}</strong>.
-          </Typography>
-          <Typography variant="body2" color="text.secondary" align="center">
-            ¿Desea descargar el reporte de la jornada en formato PDF/Excel antes
-            de cerrar?
-          </Typography>
-        </Box>
+        <Typography variant="body1">
+          ¿Estás seguro de que deseas finalizar la jornada actual? Esta acción
+          cerrará la sesión de entregas para todos los beneficiarios.
+        </Typography>
       </DialogContent>
       <DialogActions sx={{ p: 3, gap: 1 }}>
-        <Button variant="outlined" onClick={resetJornada}>
-          No, solo cerrar
-        </Button>
         <Button
-          variant="contained"
-          startIcon={<FaFileDownload />}
-          onClick={() => {
-            alert("Descargando documento...");
-            resetJornada();
-          }}
+          variant="outlined"
+          onClick={() => setOpenEndModal(false)}
         >
-          Si, descargar y cerrar
+          Cancelar
+        </Button>
+        <Button variant="contained" onClick={onConfirm}>
+          Sí, Finalizar
         </Button>
       </DialogActions>
     </Dialog>

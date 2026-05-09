@@ -5,10 +5,38 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  FormHelperText,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
 } from "@mui/material";
+import { validateProjectName, validateEstimatedCost } from "../../../../utils/functions";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs from "dayjs";
 
-function ProjectManagement({ openModal, handleCloseModal, editingProject }) {
+function ProjectManagement({
+  openModal,
+  handleCloseModal,
+  editingProject,
+  projectForm,
+  setProjectForm,
+  onSave,
+}) {
+
+  const nameError = validateProjectName(projectForm.name);
+  const descriptionError = !projectForm.description.trim() ? "Este campo es requerido" : "";
+  const costError = validateEstimatedCost(projectForm.estimated_cost);
+  const startDateError = !projectForm.start_date ? "Este campo es requerido" : "";
+  const statusError = !projectForm.status ? "Este campo es requerido" : "";
+
+  const hasErrors =
+    !!nameError ||
+    !!descriptionError ||
+    !!costError ||
+    !!startDateError ||
+    !!statusError;
   return (
     <Dialog open={openModal} onClose={handleCloseModal} fullWidth maxWidth="sm">
       <DialogTitle
@@ -17,60 +45,88 @@ function ProjectManagement({ openModal, handleCloseModal, editingProject }) {
         {editingProject ? "Editar Proyecto" : "Nuevo Proyecto Comunitario"}
       </DialogTitle>
       <DialogContent dividers>
-        <Box className="flex flex-col gap-4 pt-4">
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
           <TextField
-            fullWidth
             label="Nombre del Proyecto"
-            defaultValue={editingProject?.name || ""}
-            variant="outlined"
+            value={projectForm.name}
+            onChange={(e) =>
+              setProjectForm((p) => ({ ...p, name: e.target.value }))
+            }
+            error={!!nameError}
+            helperText={nameError || ""}
+            fullWidth
+            required
           />
           <TextField
-            fullWidth
             label="Descripción"
             multiline
             rows={3}
-            defaultValue={editingProject?.description || ""}
-            variant="outlined"
+            value={projectForm.description}
+            onChange={(e) =>
+              setProjectForm((p) => ({ ...p, description: e.target.value }))
+            }
+            error={!!descriptionError}
+            helperText={descriptionError || ""}
+            fullWidth
+            required
           />
-          <Box className="grid grid-cols-2 gap-4">
+          <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
+              label="Costo Estimado"
+              value={projectForm.estimated_cost}
+              onChange={(e) =>
+                setProjectForm((p) => ({ ...p, estimated_cost: e.target.value }))
+              }
+              error={!!costError}
+              helperText={costError || ""}
               fullWidth
-              label="Presupuesto Estimado"
-              defaultValue={editingProject?.budget || ""}
-              variant="outlined"
+              required
             />
-            <TextField
-              fullWidth
+            <DatePicker
               label="Fecha de Inicio"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              defaultValue={editingProject?.startDate || ""}
-              variant="outlined"
+              value={projectForm.start_date ? dayjs(projectForm.start_date) : null}
+              onChange={(newValue) =>
+                setProjectForm((p) => ({
+                  ...p,
+                  start_date: newValue ? newValue.format("YYYY-MM-DD") : "",
+                }))
+              }
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  required: true,
+                  error: !!startDateError,
+                  helperText: startDateError || "",
+                },
+              }}
             />
           </Box>
-          <TextField
-            fullWidth
-            select
-            label="Estado del Proyecto"
-            SelectProps={{ native: true }}
-            defaultValue={editingProject?.status || "Pendiente"}
-            variant="outlined"
-          >
-            <option value="Pendiente">Pendiente</option>
-            <option value="En ejecución">En ejecución</option>
-            <option value="Completado">Completado</option>
-          </TextField>
+          <FormControl fullWidth error={!!statusError}>
+            <InputLabel id="project-status-label">Estado del Proyecto</InputLabel>
+            <Select
+              labelId="project-status-label"
+              value={projectForm.status}
+              label="Estado del Proyecto"
+              onChange={(e) =>
+                setProjectForm((p) => ({ ...p, status: e.target.value }))
+              }
+            >
+              <MenuItem value="pending">Pendiente</MenuItem>
+              <MenuItem value="in_progress">En Proceso</MenuItem>
+              <MenuItem value="completed">Completado</MenuItem>
+            </Select>
+            {!!statusError && <FormHelperText>{statusError}</FormHelperText>}
+          </FormControl>
         </Box>
       </DialogContent>
-      <DialogActions sx={{ p: 3, gap: 1 }}>
-        <Button onClick={handleCloseModal} color="inherit">
+      <DialogActions>
+        <Button variant="outlined" onClick={handleCloseModal}>
           Cancelar
         </Button>
         <Button
           variant="contained"
-          className="bg-brand-primary"
-          onClick={handleCloseModal}
-          sx={{ px: 4 }}
+          onClick={onSave}
+          disabled={hasErrors}
         >
           {editingProject ? "Guardar Cambios" : "Registrar Proyecto"}
         </Button>

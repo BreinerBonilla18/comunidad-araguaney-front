@@ -8,12 +8,20 @@ import {
   Typography,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 /* ----------------- icons ----------------- */
 import { FaHandHoldingHeart, FaPlay, FaStop } from "react-icons/fa";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
+/* ----------------- API ----------------- */
+import { getAllFamilyHeads } from "../../../api/citizens";
+import {
+  startBenefitSession,
+  markBenefitDelivered,
+  endBenefitSession,
+} from "../../../api/socialBenefits";
 /* --------------- components -------------- */
+import BeneficiariesExporterModal from "./modals/BeneficiariesExporterModal";
 import StartBenefitDayModal from "./modals/StartBenefitDayModal";
 import TableBeneficiaries from "./components/TableBeneficiaries";
 import EndBenefitDayModal from "./modals/EndBenefitDayModal";
@@ -24,40 +32,8 @@ function SocialBenefits() {
   const [benefitType, setBenefitType] = useState("");
   const [openStartModal, setOpenStartModal] = useState(false);
   const [openEndModal, setOpenEndModal] = useState(false);
-
-  // Mock data for beneficiaries (Family Heads)
-  const [beneficiaries, setBeneficiaries] = useState([
-    {
-      id: 1,
-      name: "María González",
-      documentId: "V-12345678",
-      status: "pendiente",
-    },
-    {
-      id: 2,
-      name: "Pedro Rojas",
-      documentId: "V-22334455",
-      status: "pendiente",
-    },
-    {
-      id: 3,
-      name: "José González",
-      documentId: "V-87654321",
-      status: "pendiente",
-    },
-    {
-      id: 4,
-      name: "Ana González",
-      documentId: "V-11223344",
-      status: "pendiente",
-    },
-    {
-      id: 5,
-      name: "Luisa Rojas",
-      documentId: "V-33445566",
-      status: "pendiente",
-    },
-  ]);
+  const [openExporterModal, setOpenExporterModal] = useState(false);
+  const [beneficiaries, setBeneficiaries] = useState([]);
 
   const filteredBeneficiaries = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
@@ -71,42 +47,82 @@ function SocialBenefits() {
   const stats = useMemo(() => {
     const total = beneficiaries.length;
     const delivered = beneficiaries.filter(
-      (b) => b.status === "entregado",
+      (b) => b.status === "delivered",
     ).length;
     return { total, delivered, pending: total - delivered };
   }, [beneficiaries]);
 
-  const handleToggleStatus = (id) => {
+  const fetchBeneficiaries = useCallback(async () => {
+    try {
+      const response = await getAllFamilyHeads();
+      if (response.success) {
+        const mapped = response.data.map((b) => ({
+          id: b.id,
+          name: b.first_name + " " + b.last_name,
+          documentId: b.id_number,
+          status: b.delivery_status,
+        }));
+        setBeneficiaries(mapped);
+      }
+    } catch (error) {
+      console.error("Error fetching beneficiaries:", error);
+    }
+  }, []);
+
+  const handleToggleStatus = async (id, status) => {
     if (!isJornadaActive) return;
-    setBeneficiaries((prev) =>
-      prev.map((b) =>
-        b.id === id
-          ? {
-              ...b,
-              status: b.status === "entregado" ? "pendiente" : "entregado",
-            }
-          : b,
-      ),
-    );
+    const newStatus = status === "delivered" ? "pending" : "delivered";
+    try {
+      const response = await markBenefitDelivered(id, newStatus);
+      if (response.success) {
+        setBeneficiaries((prev) =>
+          prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b)),
+        );
+      }
+    } catch (error) {
+      console.error("Error marking delivered:", error);
+    }
   };
 
-  const handleStartJornada = (type) => {
-    setBenefitType(type);
-    setIsJornadaActive(true);
-    setOpenStartModal(false);
+  const handleStartJornada = async (type) => {
+    try {
+      const response = await startBenefitSession(type);
+      if (response.success) {
+        setBenefitType(type);
+        setIsJornadaActive(true);
+        setOpenStartModal(false);
+        fetchBeneficiaries();
+      }
+    } catch (error) {
+      console.error("Error starting jornada:", error);
+    }
   };
 
   const handleEndJornada = () => {
     setOpenEndModal(true);
   };
 
-  const resetJornada = () => {
-    setIsJornadaActive(false);
-    setBeneficiaries((prev) =>
-      prev.map((b) => ({ ...b, status: "pendiente" })),
-    );
-    setOpenEndModal(false);
+  const confirmEndJornada = async () => {
+    try {
+      const response = await endBenefitSession();
+      if (response.success) {
+        setIsJornadaActive(false);
+        setOpenEndModal(false);
+        setOpenExporterModal(true);
+      }
+    } catch (error) {
+      console.error("Error ending jornada:", error);
+    }
   };
+
+  const closeExporter = () => {
+    setOpenExporterModal(false);
+    fetchBeneficiaries();
+  };
+
+  useEffect(() => {
+    fetchBeneficiaries();
+  }, []);
 
   return (
     <Box className="w-full">
@@ -222,9 +238,15 @@ function SocialBenefits() {
 
       <EndBenefitDayModal
         setOpenEndModal={setOpenEndModal}
-        resetJornada={resetJornada}
+        onConfirm={confirmEndJornada}
         openEndModal={openEndModal}
-        stats={stats}
+      />
+
+      <BeneficiariesExporterModal
+        open={openExporterModal}
+        onClose={closeExporter}
+        beneficiaries={beneficiaries}
+        benefitType={benefitType}
       />
     </Box>
   );

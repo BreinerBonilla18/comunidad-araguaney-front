@@ -19,9 +19,14 @@ import {
   createCitizen,
   updateCitizen,
   deleteCitizen,
+  getAllCitizens,
 } from "../../../api/citizens";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
+import {
+  exportToExcelCitizens,
+  exportToPDFCitizens,
+} from "../../../utils/exportUtils";
 /* --------------- components -------------- */
 import MemberManagementModal from "./modals/MemberManagementModal";
 import FamilyHeadManagement from "./modals/FamilyHeadManagement";
@@ -57,18 +62,40 @@ function FamilyRegistry() {
   const [headForm, setHeadForm] = useState(emptyHeadForm);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
+  const [allCitizens, setAllCitizens] = useState([]);
   const [query, setQuery] = useState("");
-  
-  // Pagination states
   const [familyPage, setFamilyPage] = useState(0);
   const [familyRowsPerPage, setFamilyRowsPerPage] = useState(10);
   const [memberPage, setMemberPage] = useState(0);
   const [memberRowsPerPage, setMemberRowsPerPage] = useState(10);
+  const [successModal, setSuccessModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
+  const [errorModal, setErrorModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+  });
+  const [deleteModal, setDeleteModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    id: null,
+    type: "",
+  });
 
-  // Modales de estatus
-  const [successModal, setSuccessModal] = useState({ open: false, title: "", message: "" });
-  const [errorModal, setErrorModal] = useState({ open: false, title: "", message: "" });
-  const [deleteModal, setDeleteModal] = useState({ open: false, title: "", message: "", id: null, type: "" });
+  const fetchAllCitizens = useCallback(async () => {
+    try {
+      const response = await getAllCitizens();
+      if (response.success) {
+        setAllCitizens(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching citizens:", error);
+    }
+  }, []);
 
   const fetchMembers = useCallback(async (headId) => {
     if (!headId) return;
@@ -127,10 +154,6 @@ function FamilyRegistry() {
     }
   }, [fetchMembers]);
 
-  useEffect(() => {
-    fetchFamilyHeads();
-  }, []); 
-
   const selectedFamily = useMemo(() => {
     return families.find((f) => f.id === selectedFamilyId) ?? null;
   }, [families, selectedFamilyId]);
@@ -154,34 +177,38 @@ function FamilyRegistry() {
   const filteredAllMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
     const isSearching = !!q;
-    
+
     if (isSearching) {
       // Search mode: filter all members and apply pagination
       const filtered = allMembers.filter((member) => {
-        return [member.fullName, member.documentId, member.phone, member.familyHeadName]
+        return [
+          member.fullName,
+          member.documentId,
+          member.phone,
+          member.familyHeadName,
+        ]
           .filter(Boolean)
           .some((v) => v.toString().toLowerCase().includes(q));
       });
 
       return filtered.slice(
         memberPage * memberRowsPerPage,
-        memberPage * memberRowsPerPage + memberRowsPerPage
+        memberPage * memberRowsPerPage + memberRowsPerPage,
       );
     } else {
       // Normal mode: show selected family members with pagination
       const familyMembers = selectedFamily?.members ?? [];
       return familyMembers.slice(
         memberPage * memberRowsPerPage,
-        memberPage * memberRowsPerPage + memberRowsPerPage
+        memberPage * memberRowsPerPage + memberRowsPerPage,
       );
     }
   }, [allMembers, selectedFamily, query, memberPage, memberRowsPerPage]);
 
-  // Total counts for pagination
   const totalFilteredFamilies = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
     if (!q) return families.length;
-    
+
     return families.filter((f) => {
       const head = f?.head ?? {};
       const members = Array.isArray(f?.members) ? f.members : [];
@@ -201,11 +228,16 @@ function FamilyRegistry() {
   const totalFilteredMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
     const isSearching = !!q;
-    
+
     if (isSearching) {
       // Search mode: count all filtered members
       return allMembers.filter((member) => {
-        return [member.fullName, member.documentId, member.phone, member.familyHeadName]
+        return [
+          member.fullName,
+          member.documentId,
+          member.phone,
+          member.familyHeadName,
+        ]
           .filter(Boolean)
           .some((v) => v.toString().toLowerCase().includes(q));
       }).length;
@@ -215,20 +247,37 @@ function FamilyRegistry() {
     }
   }, [allMembers, selectedFamily, query]);
 
-  // Reset pagination when query changes
-  useEffect(() => {
-    setFamilyPage(0);
-    setMemberPage(0);
-  }, [query]);
+  const filteredFamilies = useMemo(() => {
+    const q = normalizeText(query).toLowerCase();
+    const filtered = !q
+      ? families
+      : families.filter((f) => {
+          const head = f?.head ?? {};
+          const members = Array.isArray(f?.members) ? f.members : [];
+          const inHead = [
+            head.fullName,
+            head.documentId,
+            head.phone,
+            head.address,
+          ]
+            .filter(Boolean)
+            .some((v) => v.toString().toLowerCase().includes(q));
 
-  // Reset member pagination when selected family changes (only in non-search mode)
-  useEffect(() => {
-    if (!query) {
-      setMemberPage(0);
-    }
-  }, [selectedFamily, query]);
+          const inMembers = members.some((m) => {
+            return [m.fullName, m.documentId, m.phone, m.role, m.relationship]
+              .filter(Boolean)
+              .some((v) => v.toString().toLowerCase().includes(q));
+          });
+          return inHead || inMembers;
+        });
 
-  // Pagination handlers
+    // Apply pagination to filtered results
+    return filtered.slice(
+      familyPage * familyRowsPerPage,
+      familyPage * familyRowsPerPage + familyRowsPerPage,
+    );
+  }, [families, query, familyPage, familyRowsPerPage]);
+
   const handleFamilyPageChange = (event, newPage) => {
     setFamilyPage(newPage);
   };
@@ -247,30 +296,6 @@ function FamilyRegistry() {
     setMemberPage(0);
   };
 
-  const filteredFamilies = useMemo(() => {
-    const q = normalizeText(query).toLowerCase();
-    const filtered = !q ? families : families.filter((f) => {
-      const head = f?.head ?? {};
-      const members = Array.isArray(f?.members) ? f.members : [];
-      const inHead = [head.fullName, head.documentId, head.phone, head.address]
-        .filter(Boolean)
-        .some((v) => v.toString().toLowerCase().includes(q));
-
-      const inMembers = members.some((m) => {
-        return [m.fullName, m.documentId, m.phone, m.role, m.relationship]
-          .filter(Boolean)
-          .some((v) => v.toString().toLowerCase().includes(q));
-      });
-      return inHead || inMembers;
-    });
-
-    // Apply pagination to filtered results
-    return filtered.slice(
-      familyPage * familyRowsPerPage,
-      familyPage * familyRowsPerPage + familyRowsPerPage
-    );
-  }, [families, query, familyPage, familyRowsPerPage]);
-
   const handleSaveHead = async () => {
     try {
       const { first_name, last_name } = splitName(headForm.fullName);
@@ -286,16 +311,28 @@ function FamilyRegistry() {
 
       if (headDialogMode === "create") {
         await createCitizen(data);
-        setSuccessModal({ open: true, title: "Éxito", message: "Jefe de familia registrado correctamente" });
+        setSuccessModal({
+          open: true,
+          title: "Éxito",
+          message: "Jefe de familia registrado correctamente",
+        });
       } else {
         await updateCitizen(data, selectedFamilyId);
-        setSuccessModal({ open: true, title: "Éxito", message: "Datos actualizados correctamente" });
+        setSuccessModal({
+          open: true,
+          title: "Éxito",
+          message: "Datos actualizados correctamente",
+        });
       }
       setHeadDialogOpen(false);
       fetchFamilyHeads();
     } catch (error) {
       console.error("Error saving family head:", error);
-      setErrorModal({ open: true, title: "Error", message: error.message || "No se pudo guardar la información" });
+      setErrorModal({
+        open: true,
+        title: "Error",
+        message: error.message || "No se pudo guardar la información",
+      });
     }
   };
 
@@ -315,16 +352,28 @@ function FamilyRegistry() {
 
       if (memberForm.id) {
         await updateCitizen(data, memberForm.id);
-        setSuccessModal({ open: true, title: "Éxito", message: "Miembro actualizado correctamente" });
+        setSuccessModal({
+          open: true,
+          title: "Éxito",
+          message: "Miembro actualizado correctamente",
+        });
       } else {
         await createCitizen(data);
-        setSuccessModal({ open: true, title: "Éxito", message: "Miembro agregado correctamente" });
+        setSuccessModal({
+          open: true,
+          title: "Éxito",
+          message: "Miembro agregado correctamente",
+        });
       }
       setMemberDialogOpen(false);
       fetchMembers(selectedFamilyId);
     } catch (error) {
       console.error("Error saving member:", error);
-      setErrorModal({ open: true, title: "Error", message: error.message || "No se pudo guardar la información" });
+      setErrorModal({
+        open: true,
+        title: "Error",
+        message: error.message || "No se pudo guardar la información",
+      });
     }
   };
 
@@ -332,8 +381,12 @@ function FamilyRegistry() {
     try {
       await deleteCitizen(deleteModal.id);
       setDeleteModal({ ...deleteModal, open: false });
-      setSuccessModal({ open: true, title: "Eliminado", message: "Registro eliminado correctamente" });
-      
+      setSuccessModal({
+        open: true,
+        title: "Eliminado",
+        message: "Registro eliminado correctamente",
+      });
+
       if (deleteModal.type === "head") {
         fetchFamilyHeads();
         if (selectedFamilyId === deleteModal.id) {
@@ -345,7 +398,11 @@ function FamilyRegistry() {
     } catch (error) {
       console.error("Error deleting citizen:", error);
       setDeleteModal({ ...deleteModal, open: false });
-      setErrorModal({ open: true, title: "Error", message: error.message || "No se pudo eliminar el registro" });
+      setErrorModal({
+        open: true,
+        title: "Error",
+        message: error.message || "No se pudo eliminar el registro",
+      });
     }
   };
 
@@ -416,6 +473,25 @@ function FamilyRegistry() {
     setMemberDialogOpen(true);
   }
 
+  useEffect(() => {
+    fetchFamilyHeads();
+  }, []);
+
+  useEffect(() => {
+    fetchAllCitizens();
+  }, []);
+
+  useEffect(() => {
+    setFamilyPage(0);
+    setMemberPage(0);
+  }, [query]);
+
+  useEffect(() => {
+    if (!query) {
+      setMemberPage(0);
+    }
+  }, [selectedFamily, query]);
+
   return (
     <Box className="w-full">
       <Box className="flex flex-col gap-4">
@@ -431,16 +507,18 @@ function FamilyRegistry() {
             <Button
               variant="outlined"
               startIcon={<FaFileCsv />}
-              onClick={() => {}}
-              disabled={allMembers.length === 0}
+              onClick={() => exportToExcelCitizens(allCitizens)}
+              disabled={allCitizens.length === 0}
             >
               Exportar Excel
             </Button>
             <Button
               variant="outlined"
               startIcon={<FaFilePdf />}
-              onClick={() => {}}
-              disabled={allMembers.length === 0}
+              onClick={() => {
+                exportToPDFCitizens(allCitizens);
+              }}
+              disabled={allCitizens.length === 0}
             >
               Exportar PDF
             </Button>
@@ -457,7 +535,7 @@ function FamilyRegistry() {
 
         <Paper className="p-4">
           {loading && (
-            <Box sx={{ width: '100%', mb: 2 }}>
+            <Box sx={{ width: "100%", mb: 2 }}>
               <LinearProgress color="primary" />
             </Box>
           )}
@@ -525,7 +603,7 @@ function FamilyRegistry() {
 
       <ModalDelete
         openModal={deleteModal.open}
-        setOpenModal={(val) => setDeleteModal(p => ({ ...p, open: val }))}
+        setOpenModal={(val) => setDeleteModal((p) => ({ ...p, open: val }))}
         title={deleteModal.title}
         message={deleteModal.message}
         onConfirm={handleDeleteConfirm}
@@ -533,14 +611,14 @@ function FamilyRegistry() {
 
       <ModalSuccess
         openModal={successModal.open}
-        setOpenModal={(val) => setSuccessModal(p => ({ ...p, open: val }))}
+        setOpenModal={(val) => setSuccessModal((p) => ({ ...p, open: val }))}
         title={successModal.title}
         message={successModal.message}
       />
 
       <ModalError
         openModal={errorModal.open}
-        setOpenModal={(val) => setErrorModal(p => ({ ...p, open: val }))}
+        setOpenModal={(val) => setErrorModal((p) => ({ ...p, open: val }))}
         title={errorModal.title}
         message={errorModal.message}
       />

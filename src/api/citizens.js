@@ -18,6 +18,15 @@ export const getFamilyMembersByHeadId = async (headId) => {
   }
 };
 
+export const getAllCitizens = async () => {
+  try {
+    const response = await api.get("/citizens");
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+
 export const createCitizen = async (citizensData) => {
   try {
     const response = await api.post("/citizens", citizensData);

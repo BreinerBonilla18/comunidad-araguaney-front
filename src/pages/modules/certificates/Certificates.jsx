@@ -2,14 +2,17 @@
 import {
   Box,
   Divider,
+  LinearProgress,
   Paper,
   TextField,
   Typography,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 /* ----------------- icons ----------------- */
 import { FaCertificate } from "react-icons/fa";
+/* ----------------- API ----------------- */
+import { getAllCitizens } from "../../../api/citizens";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
 /* --------------- components -------------- */
@@ -19,63 +22,66 @@ import TableResidents from "./components/TableResidents";
 function Certificates() {
   const [query, setQuery] = useState("");
   const [selectedResidentId, setSelectedResidentId] = useState(null);
+  const [residents, setResidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  const residents = useMemo(
-    () => [
-      {
-        id: "res_1",
-        fullName: "María González",
-        documentId: "V-12345678",
-        address: "Calle 1, Sector Centro, Casa #15",
-        phone: "0412-0000000",
-      },
-      {
-        id: "res_2",
-        fullName: "Pedro Rojas",
-        documentId: "V-22334455",
-        address: "Av. Principal, Sector Norte, Bloque 3",
-        phone: "0424-0000000",
-      },
-      {
-        id: "res_3",
-        fullName: "José González",
-        documentId: "V-87654321",
-        address: "Calle 1, Sector Centro, Casa #15",
-        phone: "0414-0000000",
-      },
-      {
-        id: "res_4",
-        fullName: "Ana González",
-        documentId: "V-11223344",
-        address: "Calle 1, Sector Centro, Casa #15",
-        phone: "0416-0000000",
-      },
-      {
-        id: "res_5",
-        fullName: "Luisa Rojas",
-        documentId: "V-33445566",
-        address: "Av. Principal, Sector Norte, Bloque 3",
-        phone: "0412-1111111",
-      },
-    ],
-    [],
-  );
+  const fetchResidents = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await getAllCitizens();
+      if (response.success) {
+        debugger;
+        const mapped = response.data.map((c) => ({
+          id: c.id,
+          fullName: `${c.first_name} ${c.last_name}`,
+          documentId: c.id_number,
+          address: c.house_number,
+          phone_number: c.phone_number,
+        }));
+        setResidents(mapped);
+      }
+    } catch (error) {
+      console.error("Error fetching residents:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const filteredResidents = useMemo(() => {
+  const filteredResidentsPaged = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
-    if (!q) return residents;
+    const filtered = !q
+      ? residents
+      : residents.filter((r) =>
+          [r.fullName, r.documentId, r.address, r.phone_number].some((val) =>
+            normalizeText(val || "")
+              .toLowerCase()
+              .includes(q),
+          ),
+        );
+    return filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  }, [residents, query, page, rowsPerPage]);
+
+  const totalFilteredCount = useMemo(() => {
+    const q = normalizeText(query).toLowerCase();
+    if (!q) return residents.length;
     return residents.filter((r) =>
-      [r.fullName, r.documentId, r.address].some((val) =>
+      [r.fullName, r.documentId, r.address, r.phone_number].some((val) =>
         normalizeText(val || "")
           .toLowerCase()
           .includes(q),
       ),
-    );
+    ).length;
   }, [residents, query]);
 
   const selectedResident = useMemo(() => {
     return residents.find((r) => r.id === selectedResidentId) || null;
   }, [residents, selectedResidentId]);
+
+  useEffect(() => {
+    fetchResidents();
+  }, [fetchResidents]);
 
   return (
     <Box className="w-full">
@@ -91,8 +97,12 @@ function Certificates() {
         </Box>
 
         <Paper className="p-4 shadow-md">
+          {loading && (
+            <Box sx={{ width: "100%", mb: 2 }}>
+              <LinearProgress color="primary" />
+            </Box>
+          )}
           <Box className="flex flex-col gap-4">
-            {/* Search Bar */}
             <TextField
               fullWidth
               label="Buscar residente por nombre, cédula o dirección..."
@@ -112,11 +122,19 @@ function Certificates() {
                       Residentes Registrados
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {filteredResidents.length} encontrados
+                      {totalFilteredCount} encontrados
                     </Typography>
                   </Box>
                   <TableResidents
-                    filteredResidents={filteredResidents}
+                    filteredResidents={filteredResidentsPaged}
+                    totalCount={totalFilteredCount}
+                    page={page}
+                    rowsPerPage={rowsPerPage}
+                    onPageChange={(e, p) => setPage(p)}
+                    onRowsPerPageChange={(e) => {
+                      setRowsPerPage(parseInt(e.target.value, 10));
+                      setPage(0);
+                    }}
                     selectedResidentId={selectedResidentId}
                     setSelectedResidentId={setSelectedResidentId}
                   />

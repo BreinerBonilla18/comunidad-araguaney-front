@@ -63,6 +63,30 @@ export function validateAddress(value) {
   return "";
 }
 
+export function validateProjectName(value) {
+  const v = normalizeText(value);
+  if (!v) return "Este campo es requerido";
+  if (v.length < 3) return "El nombre debe tener al menos 3 caracteres";
+  if (v.length > 100) return "El nombre no puede exceder 100 caracteres";
+  return "";
+}
+
+export function validateEstimatedCost(value) {
+  const v = normalizeText(value);
+  if (!v) return "Este campo es requerido";
+  
+  // Remove currency symbols and spaces for validation
+  const cleanValue = v.replace(/[^0-9.]/g, '');
+  if (!cleanValue) return "Ingrese un valor válido";
+  
+  const numericValue = parseFloat(cleanValue);
+  if (isNaN(numericValue)) return "Ingrese un número válido";
+  if (numericValue <= 0) return "El costo debe ser mayor a 0";
+  if (numericValue > 999999999) return "El costo es demasiado elevado";
+  
+  return "";
+}
+
 export function formatDate(dateString) {
   if (!dateString) return "";
   
