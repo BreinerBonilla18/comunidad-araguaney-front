@@ -14,6 +14,7 @@ import { theme } from "./theme";
 import FamilyRegistry from "./pages/modules/family-registry/FamilyRegistry";
 import SocialBenefits from "./pages/modules/social-benefits/SocialBenefits";
 import Certificates from "./pages/modules/certificates/Certificates";
+import Spokepersons from "./pages/modules/spokepersons/Spokepersons";
 import Projects from "./pages/modules/community-projects/Projects";
 import Documents from "./pages/modules/documents/Documents";
 import Finances from "./pages/modules/finances/Finances";
@@ -58,11 +59,12 @@ function App() {
             <Route element={<ModulesLayout />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/family-registry" element={<FamilyRegistry />} />
-              <Route path="/beneficios" element={<SocialBenefits />} />
-              <Route path="/proyectos" element={<Projects />} />
-              <Route path="/constancias" element={<Certificates />} />
-              <Route path="/documentos" element={<Documents />} />
-              <Route path="/finanzas" element={<Finances />} />
+              <Route path="/beneficiaries" element={<SocialBenefits />} />
+              <Route path="/projects" element={<Projects />} />
+              <Route path="/certificates" element={<Certificates />} />
+              <Route path="/documents" element={<Documents />} />
+              <Route path="/finances" element={<Finances />} />
+              <Route path="/spokespersons" element={<Spokepersons/>} /> 
             </Route>
           </Route>
 

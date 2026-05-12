@@ -37,7 +37,6 @@ function Dashboard() {
   const fetchStats = useCallback(async () => {
     try {
       setLoading(true);
-      debugger;
       const [statsRes, projectsRes] = await Promise.all([
         getDashboardStats(),
         getProjects(),

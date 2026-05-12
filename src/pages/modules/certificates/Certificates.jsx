@@ -32,7 +32,6 @@ function Certificates() {
       setLoading(true);
       const response = await getAllCitizens();
       if (response.success) {
-        debugger;
         const mapped = response.data.map((c) => ({
           id: c.id,
           fullName: `${c.first_name} ${c.last_name}`,

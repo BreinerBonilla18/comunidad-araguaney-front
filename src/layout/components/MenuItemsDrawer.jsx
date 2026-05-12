@@ -6,6 +6,7 @@ import {
   FaProjectDiagram,
   FaUsers,
   FaSignOutAlt,
+  FaChalkboardTeacher,
 } from "react-icons/fa";
 import { BiSolidDashboard } from "react-icons/bi";
 import {
@@ -42,16 +43,17 @@ function MenuItemsDrawer() {
     {
       text: "Beneficios sociales",
       icon: <FaHandsHelping />,
-      path: "/beneficios",
+      path: "/beneficiaries",
     },
     {
       text: "Proyectos comunitarios",
       icon: <FaProjectDiagram />,
-      path: "/proyectos",
+      path: "/projects",
     },
-    { text: "Constancias", icon: <FaFileAlt />, path: "/constancias" },
-    { text: "Documentos", icon: <FaFolder />, path: "/documentos" },
-    { text: "Finanzas", icon: <FaDollarSign />, path: "/finanzas" },
+    { text: "Constancias", icon: <FaFileAlt />, path: "/certificates" },
+    { text: "Documentos", icon: <FaFolder />, path: "/documents" },
+    { text: "Finanzas", icon: <FaDollarSign />, path: "/finances" },
+    { text: "Voceros", icon: <FaChalkboardTeacher />, path: "/spokespersons" }
   ];
 
   return (
@@ -67,7 +69,13 @@ function MenuItemsDrawer() {
         </div>
       </Toolbar>
 
-      <List sx={{ display: "flex", flexDirection: "column", height: "calc(100vh - 80px)" }}>
+      <List
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          height: "calc(100vh - 80px)",
+        }}
+      >
         <Box sx={{ flex: 1 }}>
           {menuItems.map((item) => (
             <ListItem
