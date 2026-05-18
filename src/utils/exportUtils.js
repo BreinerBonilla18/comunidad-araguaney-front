@@ -205,7 +205,7 @@ export const exportToPDFCitizens = (data) => {
   autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
-    startY: 40,
+    startY: 45,
     theme: "grid",
     headStyles: { fillColor: [25, 118, 210] }, // Color Primary de MUI
   });
@@ -231,4 +231,98 @@ export const exportToExcelCitizens = (data) => {
   XLSX.utils.book_append_sheet(workbook, worksheet, "Ciudadanos");
 
   XLSX.writeFile(workbook, `Reporte_Ciudadanos_${date}.xlsx`);
+};
+
+/* ----------------- Exportación de Certificados ----------------- */
+
+export const exportResidencyCertificate = async (data, spokepersons, logoUrl) => {
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const date = new Date(data.issueDate || new Date());
+  
+  const day = date.getDate();
+  const month = date.toLocaleString('es-ES', { month: 'long' });
+  const year = date.getFullYear();
+
+  const getBase64Image = (imgUrl) => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'Anonymous';
+      img.src = imgUrl;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = (e) => reject(e);
+    });
+  };
+
+  try {
+    const logoBase64 = await getBase64Image(logoUrl || '/src/assets/araguaney-img.png');
+    doc.addImage(logoBase64, 'PNG', 15, 10, 35, 35);
+    doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 35, 35);
+  } catch (error) {
+    console.warn("No se pudo cargar la imagen del Araguaney", error);
+  }
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("COMUNIDAD EL ARAGUANEY", pageWidth / 2, 25, { align: "center" });
+  
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("República Bolivariana de Venezuela", pageWidth / 2, 45, { align: "center" });
+  doc.text("Ministerio del Poder para las comunas y Movimientos Sociales", pageWidth / 2, 50, { align: "center" });
+  doc.text("Rubio-Municipio Junín-Estado Táchira", pageWidth / 2, 55, { align: "center" });
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("Constancia de residencia", pageWidth / 2, 70, { align: "center" });
+  
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
+  doc.text(`Oficio N.º A CR ${year}`, 15, 80);
+
+  const margin = 20;
+  const contentWidth = pageWidth - (margin * 2);
+  const mainText = `Nosotros, voceros del consejo comunal EL ARAGUANEY abajo firmantes registrados bajo el código SITUR R-CCOC-18-06-01-034542, RIF número C505665081, Sector 2 código de C.L.P.P. 126 ubicado RUBIO Municipio JUNIN del Estado Táchira. En uso de las atribuciones legales que nos confiere la ley orgánica del Poder Popular y la la ley orgánica de los consejos comunales, por medio de la presente hacemos constar que el ciudadano: ${data.fullName.toUpperCase()}, Titular de cedula de identidad N.º V-${data.documentId} de nacionalidad VENEZOLANA, tiene residencia de habitación en esta comunidad en la siguiente dirección ${data.address.toUpperCase()}, desde hace ${data.residencyYears} años y ${data.residencyMonths} meses.`;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(12);
+  doc.text(mainText, margin, 100, { 
+    maxWidth: contentWidth, 
+    align: "justify" 
+  });
+
+  const footerText = `Constancia que se expide a solicitud de la parte interesada para tramites legales a los ${day} días del mes de ${month} de ${year}.`;
+  doc.text(footerText, margin, 160, {
+    maxWidth: contentWidth
+  });
+  
+  doc.setFont("helvetica", "bold");
+  doc.text("VA SIN ENMIENDA", margin, 175);
+  
+  doc.text("Por el consejo comunal", pageWidth / 2, 190, { align: "center" });
+  doc.text("Sello", pageWidth / 2, 215, { align: "center" });
+
+  const vocerosToPrint = spokepersons.slice(0, 3);
+  const signatureY = 265;
+  const signatureWidth = 50;
+  const totalWidth = (signatureWidth * vocerosToPrint.length);
+  const totalSpacing = pageWidth - totalWidth;
+  const spacing = totalSpacing / (vocerosToPrint.length + 1);
+
+  vocerosToPrint.forEach((v, i) => {
+    const xPos = spacing + (i * (signatureWidth + spacing));
+    doc.line(xPos, signatureY, xPos + signatureWidth, signatureY);
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text((v.fullName || `${v.first_name || ""} ${v.last_name || ""}`).toUpperCase(), xPos + signatureWidth / 2, signatureY + 5, { align: "center" });
+    doc.setFont("helvetica", "normal");
+    doc.text(`V-${v.documentId || v.id_number}`, xPos + signatureWidth / 2, signatureY + 10, { align: "center" });
+  });
+
+  doc.save(`Constancia_Residencia_${data.fullName.replace(/\s+/g, '_')}.pdf`);
 };

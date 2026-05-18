@@ -1,7 +1,68 @@
-import { FaCertificate, FaFileAlt, FaHome, FaUserCheck } from "react-icons/fa";
-import { Box, Button, Divider, Typography } from "@mui/material";
+import {
+  FaCertificate,
+  FaFileAlt,
+  FaHome,
+  FaUserCheck
+} from "react-icons/fa";
+import {
+  Box,
+  Button,
+  Divider,
+  Typography
+} from "@mui/material";
+import { useState, useCallback } from "react";
+import { getSpokepersons } from "../../../../api/spokepersons";
+import { exportResidencyCertificate } from "../../../../utils/exportUtils";
+import araguaneyLogo from "../../../../assets/araguaney-img.png";
+import ResidenceCertificateFormModal from "../modals/ResidenceCertificateFormModal";
 
 function CertificateGenerator({ selectedResident }) {
+  const [openResidencyModal, setOpenResidencyModal] = useState(false);
+  const [spokepersons, setSpokepersons] = useState([]);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    documentId: "",
+    address: "",
+    residencyYears: "0",
+    residencyMonths: "0",
+    issueDate: new Date().toISOString().split("T")[0],
+  });
+
+  const fetchSpokepersons = useCallback(async () => {
+    try {
+      const response = await getSpokepersons();
+      if (response.success) {
+        setSpokepersons(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching spokespersons:", error);
+    }
+  }, []);
+
+  const handleOpenResidencyModal = () => {
+    if (selectedResident) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: selectedResident.fullName,
+        documentId: selectedResident.documentId,
+        address: "",
+      }));
+      setOpenResidencyModal(true);
+      fetchSpokepersons();
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleExportResidency = async (customData) => {
+    const dataToExport = customData || formData;
+    await exportResidencyCertificate(dataToExport, spokepersons, araguaneyLogo);
+    setOpenResidencyModal(false);
+  };
+
   const residentDetails = [
     {
       label: "Nombre Completo",
@@ -92,11 +153,7 @@ function CertificateGenerator({ selectedResident }) {
             fontSize: "1rem",
             boxShadow: 2,
           }}
-          onClick={() =>
-            alert(
-              `Generando Constancia de Residencia para ${selectedResident.fullName}`,
-            )
-          }
+          onClick={handleOpenResidencyModal}
         >
           Constancia de Residencia (PDF)
         </Button>
@@ -123,6 +180,13 @@ function CertificateGenerator({ selectedResident }) {
           Constancia Buena Conducta (PDF)
         </Button>
       </Box>
+      <ResidenceCertificateFormModal
+        setOpenResidencyModal={setOpenResidencyModal}
+        handleExportResidency={handleExportResidency}
+        openResidencyModal={openResidencyModal}
+        handleInputChange={handleInputChange}
+        formData={formData}
+      />
     </Box>
   );
 }
