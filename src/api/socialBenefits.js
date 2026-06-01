@@ -11,10 +11,17 @@ export const startBenefitSession = async (eventType) => {
   }
 };
 
-export const markBenefitDelivered = async (citizenId, status) => {
+export const markBenefitDelivered = async (
+  citizenId,
+  status,
+  quantity,
+  cylinder_number,
+) => {
   try {
     const response = await api.patch(`/citizens/mark-delivered/${citizenId}`, {
       status,
+      quantity,
+      cylinder_number,
     });
     return response.data;
   } catch (error) {

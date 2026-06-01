@@ -25,6 +25,7 @@ import BeneficiariesExporterModal from "./modals/BeneficiariesExporterModal";
 import StartBenefitDayModal from "./modals/StartBenefitDayModal";
 import TableBeneficiaries from "./components/TableBeneficiaries";
 import EndBenefitDayModal from "./modals/EndBenefitDayModal";
+import ConfirmDeliveryModal from "./modals/ConfirmDeliveryModal";
 
 function SocialBenefits() {
   const [query, setQuery] = useState("");
@@ -34,6 +35,7 @@ function SocialBenefits() {
   const [openEndModal, setOpenEndModal] = useState(false);
   const [openExporterModal, setOpenExporterModal] = useState(false);
   const [beneficiaries, setBeneficiaries] = useState([]);
+  const [confirmModal, setConfirmModal] = useState({ open: false, id: null, name: "" });
 
   const filteredBeneficiaries = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
@@ -61,6 +63,8 @@ function SocialBenefits() {
           name: b.first_name + " " + b.last_name,
           documentId: b.id_number,
           status: b.delivery_status,
+          quantity: b.delivery_quantity,
+          cylinderNumber: b.gas_cylinder_number,
         }));
         setBeneficiaries(mapped);
       }
@@ -69,19 +73,37 @@ function SocialBenefits() {
     }
   }, []);
 
-  const handleToggleStatus = async (id, status) => {
+  const handleToggleStatus = async (id, status, name) => {
     if (!isJornadaActive) return;
-    const newStatus = status === "delivered" ? "pending" : "delivered";
+    if (status !== "delivered") {
+      setConfirmModal({ open: true, id, name });
+    } else {
+      try {
+        const response = await markBenefitDelivered(id, "pending", null, null);
+        if (response.success) {
+          setBeneficiaries((prev) =>
+            prev.map((b) => (b.id === id ? { ...b, status: "pending", quantity: null, cylinderNumber: null } : b)),
+          );
+        }
+      } catch (error) {
+        console.error("Error marking pending:", error);
+      }
+    }
+  };
+
+  const handleConfirmDelivery = async (quantity, cylinderNumber) => {
     try {
-      const response = await markBenefitDelivered(id, newStatus);
+      const { id } = confirmModal;
+      const response = await markBenefitDelivered(id, "delivered", quantity, cylinderNumber);
       if (response.success) {
         setBeneficiaries((prev) =>
-          prev.map((b) => (b.id === id ? { ...b, status: newStatus } : b)),
+          prev.map((b) => (b.id === id ? { ...b, status: "delivered", quantity, cylinderNumber } : b)),
         );
       }
     } catch (error) {
       console.error("Error marking delivered:", error);
     }
+    setConfirmModal({ open: false, id: null, name: "" });
   };
 
   const handleStartJornada = async (type) => {
@@ -214,6 +236,7 @@ function SocialBenefits() {
                 filteredBeneficiaries={filteredBeneficiaries}
                 handleToggleStatus={handleToggleStatus}
                 isJornadaActive={isJornadaActive}
+                benefitType={benefitType}
               />
             </Paper>
           </Box>
@@ -247,6 +270,14 @@ function SocialBenefits() {
         onClose={closeExporter}
         beneficiaries={beneficiaries}
         benefitType={benefitType}
+      />
+
+      <ConfirmDeliveryModal
+        open={confirmModal.open}
+        onClose={() => setConfirmModal({ open: false, id: null, name: "" })}
+        onConfirm={handleConfirmDelivery}
+        benefitType={benefitType}
+        beneficiaryName={confirmModal.name}
       />
     </Box>
   );

@@ -11,11 +11,7 @@ import {
 } from "@mui/material";
 import { FaUserMinus } from "react-icons/fa";
 
-function TableSpokepersons({
-  spokepersons,
-  onRemove,
-  loading,
-}) {
+function TableSpokepersons({ spokepersons, onRemove, loading }) {
   return (
     <TableContainer sx={{ borderRadius: 1 }}>
       <Table size="small" stickyHeader>
@@ -23,14 +19,20 @@ function TableSpokepersons({
           <TableRow>
             <TableCell sx={{ fontWeight: "bold" }}>Nombre Completo</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Cédula</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }} align="center">Acciones</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>Cargo</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }} align="center">
+              Acciones
+            </TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {spokepersons.map((spokeperson) => (
             <TableRow key={spokeperson.id} hover>
-              <TableCell>{spokeperson.first_name + " " + spokeperson.last_name}</TableCell>
+              <TableCell>
+                {spokeperson.first_name + " " + spokeperson.last_name}
+              </TableCell>
               <TableCell>{spokeperson.id_number}</TableCell>
+              <TableCell>{spokeperson.spokesperson_position }</TableCell>
               <TableCell align="center">
                 <Tooltip title="Desasignar Vocero">
                   <IconButton
@@ -46,7 +48,7 @@ function TableSpokepersons({
           ))}
           {spokepersons.length === 0 && (
             <TableRow>
-              <TableCell colSpan={3} align="center" sx={{ py: 4 }}>
+              <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
                 <Typography color="text.secondary">
                   No hay voceros asignados actualmente
                 </Typography>

@@ -9,9 +9,9 @@ export const getSpokepersons = async () => {
   }
 };
 
-export const assignSpokeperson = async (citizenId) => {
+export const assignSpokeperson = async (citizenId, position) => {
   try {
-    const response = await api.patch(`/spokespersons/assign/${citizenId}`);
+    const response = await api.patch(`/spokespersons/assign/${citizenId}`, { position });
     return response.data;
   } catch (error) {
     throw error.response?.data || error.message;

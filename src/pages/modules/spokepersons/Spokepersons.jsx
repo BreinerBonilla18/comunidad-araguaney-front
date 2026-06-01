@@ -71,7 +71,6 @@ function Spokepersons() {
         getSpokepersons(),
         getAllCitizens(),
       ]);
-
       if (spokepersonsRes.success) {
         setSpokepersons(spokepersonsRes.data);
       }
@@ -100,10 +99,10 @@ function Spokepersons() {
     setOpenModal(false);
   };
 
-  const handleAssignSpokeperson = async (citizen) => {
+  const handleAssignSpokeperson = async (citizen, position) => {
     try {
       setLoading(true);
-      const response = await assignSpokeperson(citizen.id);
+      const response = await assignSpokeperson(citizen.id, position);
       if (response.success) {
         setSuccessModal({
           open: true,

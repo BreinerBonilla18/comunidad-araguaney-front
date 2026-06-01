@@ -14,7 +14,10 @@ function TableBeneficiaries({
   filteredBeneficiaries,
   handleToggleStatus,
   isJornadaActive,
+  benefitType,
 }) {
+  const isGas = benefitType === "Gas Comunal";
+
   return (
     <Table size="small" stickyHeader>
       <TableHead>
@@ -22,6 +25,8 @@ function TableBeneficiaries({
           <TableCell sx={{ fontWeight: "bold" }}>Nombre Completo</TableCell>
           <TableCell sx={{ fontWeight: "bold" }}>Cédula</TableCell>
           <TableCell sx={{ fontWeight: "bold" }}>Estado</TableCell>
+          <TableCell sx={{ fontWeight: "bold" }}>Cantidad</TableCell>
+          {isGas && <TableCell sx={{ fontWeight: "bold" }}>Nº Bombona</TableCell>}
           <TableCell align="right" sx={{ fontWeight: "bold" }}>
             Acción
           </TableCell>
@@ -47,12 +52,14 @@ function TableBeneficiaries({
                 variant="outlined"
               />
             </TableCell>
+            <TableCell>{b.status === "delivered" ? b.quantity || 1 : "-"}</TableCell>
+            {isGas && <TableCell>{b.status === "delivered" ? b.cylinderNumber || "-" : "-"}</TableCell>}
             <TableCell align="right">
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={b.status === "delivered"}
-                    onChange={() => handleToggleStatus(b.id, b.status)}
+                    onChange={() => handleToggleStatus(b.id, b.status, b.name)}
                     disabled={!isJornadaActive}
                   />
                 }

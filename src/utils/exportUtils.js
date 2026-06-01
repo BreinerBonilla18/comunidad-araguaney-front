@@ -8,6 +8,7 @@ import { formatDate } from "./functions";
 export const exportToPDFBeneficiaries = (data, benefitType) => {
   const doc = new jsPDF();
   const date = new Date().toLocaleDateString();
+  const isGas = benefitType === "Gas Comunal";
 
   // Configuración de encabezado
   doc.setFontSize(18);
@@ -18,12 +19,21 @@ export const exportToPDFBeneficiaries = (data, benefitType) => {
   doc.text(`Fecha de reporte: ${date}`, 14, 37);
 
   // Generación de la tabla
-  const tableColumn = ["Nombre Completo", "Cédula", "Estado"];
-  const tableRows = data.map((b) => [
-    b.name,
-    b.documentId,
-    b.status === "delivered" ? "ENTREGADO" : "PENDIENTE",
-  ]);
+  const tableColumn = ["Nombre", "Cédula", "Estado", "Cantidad"];
+  if (isGas) tableColumn.push("Nº Bombona");
+
+  const tableRows = data.map((b) => {
+    const row = [
+      b.name,
+      b.documentId,
+      b.status === "delivered" ? "ENTREGADO" : "PENDIENTE",
+      b.status === "delivered" ? (b.quantity || 1) : "-",
+    ];
+    if (isGas) {
+      row.push(b.status === "delivered" ? (b.cylinderNumber || "-") : "-");
+    }
+    return row;
+  });
 
   autoTable(doc, {
     head: [tableColumn],
@@ -38,14 +48,22 @@ export const exportToPDFBeneficiaries = (data, benefitType) => {
 
 export const exportToExcelBeneficiaries = (data, benefitType) => {
   const date = new Date().toLocaleDateString();
+  const isGas = benefitType === "Gas Comunal";
 
   // Transformar datos para Excel
-  const excelData = data.map((b) => ({
-    "Nombre Completo": b.name,
-    Cédula: b.documentId,
-    "Estado de Entrega": b.status === "delivered" ? "Entregado" : "Pendiente",
-    "Fecha Reporte": date,
-  }));
+  const excelData = data.map((b) => {
+    const row = {
+      "Nombre Completo": b.name,
+      Cédula: b.documentId,
+      "Estado de Entrega": b.status === "delivered" ? "Entregado" : "Pendiente",
+      "Cantidad": b.status === "delivered" ? (b.quantity || 1) : "-",
+    };
+    if (isGas) {
+      row["Nº Bombona"] = b.status === "delivered" ? (b.cylinderNumber || "-") : "-";
+    }
+    row["Fecha Reporte"] = date;
+    return row;
+  });
 
   const worksheet = XLSX.utils.json_to_sheet(excelData);
   const workbook = XLSX.utils.book_new();
