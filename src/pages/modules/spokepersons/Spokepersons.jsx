@@ -99,7 +99,7 @@ function Spokepersons() {
     setOpenModal(false);
   };
 
-  const handleAssignSpokeperson = async (citizen, position) => {
+  const handleAssignSpokeperson = async (citizen, position, setSelectedCitizen) => {
     try {
       setLoading(true);
       const response = await assignSpokeperson(citizen.id, position);
@@ -111,6 +111,7 @@ function Spokepersons() {
         });
         handleCloseModal();
         fetchData();
+        setSelectedCitizen(null)
       }
     } catch (error) {
       setErrorModal({

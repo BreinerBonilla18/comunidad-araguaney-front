@@ -16,10 +16,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import {
   normalizeText,
-  normalizeVenezuelanDocumentId,
   validateBirthDate,
   validateFullName,
-  validateVenezuelanDocumentId,
   validateAddress,
 } from "../../../../utils/functions";
 
@@ -32,19 +30,21 @@ function FamilyHeadManagement({
   onSave,
 }) {
   const fullNameError = validateFullName(headForm.fullName);
-  const documentIdError = validateVenezuelanDocumentId(headForm.documentId);
+  const documentIdError = !headForm.documentId ? "Este campo es requerido" : "";
   const genderError = !normalizeText(headForm.gender)
     ? "Este campo es requerido"
     : "";
   const birthDateError = validateBirthDate(headForm.birthDate);
   const addressError = validateAddress(headForm.address);
+  const nationalityError = !headForm.nationality ? "Este campo es requerido" : "";
 
   const hasErrors =
     !!fullNameError ||
     !!documentIdError ||
     !!genderError ||
     !!birthDateError ||
-    !!addressError;
+    !!addressError ||
+    !!nationalityError;
 
   return (
     <Dialog
@@ -71,25 +71,35 @@ function FamilyHeadManagement({
             fullWidth
             required
           />
-          <TextField
-            label="Cédula"
-            value={headForm.documentId}
-            onChange={(e) =>
-              setHeadForm((p) => ({ ...p, documentId: e.target.value }))
-            }
-            onBlur={() => {
-              const normalized = normalizeVenezuelanDocumentId(
-                headForm.documentId,
-              );
-              if (normalized && normalized !== headForm.documentId) {
-                setHeadForm((p) => ({ ...p, documentId: normalized }));
-              }
-            }}
-            error={!!documentIdError}
-            helperText={documentIdError || ""}
-            fullWidth
-            required
-          />
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControl fullWidth error={!!nationalityError}>
+              <InputLabel id="head-nationality-label">Nacionalidad</InputLabel>
+              <Select
+                labelId="head-nationality-label"
+                value={headForm.nationality}
+                label="Nacionalidad"
+                onChange={(e) =>
+                  setHeadForm((p) => ({ ...p, nationality: e.target.value }))
+                }
+              >
+                <MenuItem value="V">Venezolana (V-)</MenuItem>
+                <MenuItem value="E">Extranjera (E-)</MenuItem>
+              </Select>
+              {!!nationalityError && <FormHelperText>{nationalityError}</FormHelperText>}
+            </FormControl>
+            <TextField
+              label="Número de Cédula"
+              value={headForm.documentId}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                setHeadForm((p) => ({ ...p, documentId: value }));
+              }}
+              error={!!documentIdError}
+              helperText={documentIdError || ""}
+              fullWidth
+              required
+            />
+          </Box>
           <TextField
             label="Teléfono"
             value={headForm.phone}

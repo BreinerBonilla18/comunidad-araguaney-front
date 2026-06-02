@@ -6,7 +6,7 @@ import {
   LinearProgress,
   Paper,
   TextField,
-  Typography,
+  Typography
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useMemo, useState, useEffect, useCallback } from "react";
@@ -35,6 +35,7 @@ import TableMembers from "./components/TableMembers";
 import ModalDelete from "../../../modals/ModalDelete";
 import ModalSuccess from "../../../modals/ModalSucces";
 import ModalError from "../../../modals/ModalError";
+import ExportationArchiveModal from "./modals/ExportationArchiveModal";
 
 const emptyHeadForm = {
   fullName: "",
@@ -43,6 +44,7 @@ const emptyHeadForm = {
   address: "",
   gender: "",
   birthDate: "",
+  nationality: "V",
 };
 
 const emptyMemberForm = {
@@ -51,6 +53,7 @@ const emptyMemberForm = {
   phone: "",
   gender: "",
   birthDate: "",
+  nationality: "V",
 };
 
 function FamilyRegistry() {
@@ -85,6 +88,9 @@ function FamilyRegistry() {
     id: null,
     type: "",
   });
+  const [exportModalOpen, setExportModalOpen] = useState(false);
+  const [exportActionType, setExportActionType] = useState(null);
+  const [exportSelection, setExportSelection] = useState("all"); // 'all' or 'heads'
 
   const fetchAllCitizens = useCallback(async () => {
     try {
@@ -300,7 +306,7 @@ function FamilyRegistry() {
     try {
       const { first_name, last_name } = splitName(headForm.fullName);
       const data = {
-        id_number: headForm.documentId,
+        id_number: `${headForm.nationality}-${headForm.documentId}`,
         first_name,
         last_name,
         phone_number: headForm.phone,
@@ -340,7 +346,7 @@ function FamilyRegistry() {
     try {
       const { first_name, last_name } = splitName(memberForm.fullName);
       const data = {
-        id_number: memberForm.documentId,
+        id_number: `${memberForm.nationality}-${memberForm.documentId}`,
         first_name,
         last_name,
         phone_number: memberForm.phone,
@@ -434,6 +440,26 @@ function FamilyRegistry() {
     };
   }
 
+  function parseDocumentId(documentId) {
+    if (!documentId) return { nationality: "V", number: "" };
+    
+    const match = documentId.match(/^([VE])-(\d+)$/);
+    if (match) {
+      return { nationality: match[1], number: match[2] };
+    }
+    
+    // If the ID doesn't match the expected format, try to extract nationality
+    if (documentId.startsWith("V-")) {
+      return { nationality: "V", number: documentId.substring(2) };
+    }
+    if (documentId.startsWith("E-")) {
+      return { nationality: "E", number: documentId.substring(2) };
+    }
+    
+    // Default to Venezuelan if no prefix
+    return { nationality: "V", number: documentId };
+  }
+
   function openCreateHead() {
     setHeadDialogMode("create");
     setHeadForm(emptyHeadForm);
@@ -443,13 +469,16 @@ function FamilyRegistry() {
   function openEditHead(family) {
     setHeadDialogMode("edit");
 
+    const { nationality, number } = parseDocumentId(family?.head?.documentId);
+
     setHeadForm({
       fullName: family?.head?.fullName ?? "",
-      documentId: family?.head?.documentId ?? "",
+      documentId: number,
       phone: family?.head?.phone ?? "",
       address: family?.head?.address ?? "",
       gender: family?.head?.gender ?? "",
       birthDate: family?.head?.birthDate ?? "",
+      nationality: nationality,
     });
     setSelectedFamilyId(family.id);
     setHeadDialogOpen(true);
@@ -462,16 +491,40 @@ function FamilyRegistry() {
   }
 
   function openEditMember(member) {
+    const { nationality, number } = parseDocumentId(member.documentId);
+
     setMemberForm({
       id: member.id,
       fullName: member.fullName ?? "",
-      documentId: member.documentId ?? "",
+      documentId: number,
       phone: member.phone ?? "",
       gender: member.gender ?? "",
       birthDate: member.birthDate ?? "",
+      nationality: nationality,
     });
     setMemberDialogOpen(true);
   }
+
+  const handleExportAction = async () => {
+    let dataToExport = allCitizens;
+    if (exportSelection === "heads") {
+      const headIds = families.map((f) => f.id);
+      dataToExport = allCitizens.filter((c) => headIds.includes(c.id));
+    }
+
+    if (exportActionType === "excel") {
+      exportToExcelCitizens(dataToExport);
+    } else if (exportActionType === "pdf") {
+      await exportToPDFCitizens(dataToExport);
+    }
+    setExportModalOpen(false);
+  };
+
+  const openExportModal = (type) => {
+    setExportActionType(type);
+    setExportSelection("all");
+    setExportModalOpen(true);
+  };
 
   useEffect(() => {
     fetchFamilyHeads();
@@ -507,7 +560,7 @@ function FamilyRegistry() {
             <Button
               variant="outlined"
               startIcon={<FaFileCsv />}
-              onClick={() => exportToExcelCitizens(allCitizens)}
+              onClick={() => openExportModal("excel")}
               disabled={allCitizens.length === 0}
             >
               Exportar Excel
@@ -515,9 +568,7 @@ function FamilyRegistry() {
             <Button
               variant="outlined"
               startIcon={<FaFilePdf />}
-              onClick={() => {
-                exportToPDFCitizens(allCitizens);
-              }}
+              onClick={() => openExportModal("pdf")}
               disabled={allCitizens.length === 0}
             >
               Exportar PDF
@@ -621,6 +672,14 @@ function FamilyRegistry() {
         setOpenModal={(val) => setErrorModal((p) => ({ ...p, open: val }))}
         title={errorModal.title}
         message={errorModal.message}
+      />
+
+      <ExportationArchiveModal
+        exportModalOpen={exportModalOpen}
+        setExportModalOpen={setExportModalOpen}
+        exportSelection={exportSelection}
+        setExportSelection={setExportSelection}
+        handleExportAction={handleExportAction}
       />
     </Box>
   );

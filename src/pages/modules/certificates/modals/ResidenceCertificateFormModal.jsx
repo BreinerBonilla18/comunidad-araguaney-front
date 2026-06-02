@@ -21,8 +21,6 @@ function ResidenceCertificateFormModal({
   handleInputChange,
   formData,
 }) {
-  // Limpiar la cédula: si tiene "V-", se elimina (se añade en el exportador)
-  const cleanDocumentId = (formData.documentId || "").replace(/^V-/i, "");
 
   const addressError = validateAddress(formData.address);
   const yearsError =
@@ -75,7 +73,7 @@ function ResidenceCertificateFormModal({
               fullWidth
               label="Cédula de Identidad"
               name="documentId"
-              value={cleanDocumentId}
+              value={formData.documentId}
               InputProps={{ readOnly: true }}
               variant="filled"
             />
@@ -151,7 +149,7 @@ function ResidenceCertificateFormModal({
         <Button
           onClick={() => {
             // Aseguramos que pasamos la cédula limpia al exportador
-            handleExportResidency({ ...formData, documentId: cleanDocumentId });
+            handleExportResidency({ ...formData, documentId: formData.documentId });
           }}
           variant="contained"
           startIcon={<FaDownload />}

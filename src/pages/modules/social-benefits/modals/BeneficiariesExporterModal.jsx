@@ -9,6 +9,9 @@ import {
 } from "@mui/material";
 import { FaFileExcel, FaFilePdf, FaCheckCircle } from "react-icons/fa";
 import { exportToExcelBeneficiaries, exportToPDFBeneficiaries } from "../../../../utils/exportUtils";
+import { getSpokepersons } from "../../../../api/spokepersons";
+import araguaneyLogo from "../../../../assets/araguaney-img.png";
+import { useState, useCallback, useEffect } from "react";
 
 function BeneficiariesExporterModal({
   open,
@@ -16,6 +19,25 @@ function BeneficiariesExporterModal({
   beneficiaries,
   benefitType,
 }) {
+  const [spokepersons, setSpokepersons] = useState([]);
+
+  const fetchSpokepersons = useCallback(async () => {
+    try {
+      const response = await getSpokepersons();
+      if (response.success) {
+        setSpokepersons(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching spokespersons:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      fetchSpokepersons();
+    }
+  }, [open, fetchSpokepersons]);
+
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
       <DialogTitle sx={{ textAlign: "center", fontWeight: "bold" }}>
@@ -43,7 +65,7 @@ function BeneficiariesExporterModal({
               color="error"
               startIcon={<FaFilePdf />}
               onClick={() =>
-                exportToPDFBeneficiaries(beneficiaries, benefitType)
+                exportToPDFBeneficiaries(beneficiaries, benefitType, spokepersons, araguaneyLogo)
               }
               sx={{ py: 1.5 }}
             >

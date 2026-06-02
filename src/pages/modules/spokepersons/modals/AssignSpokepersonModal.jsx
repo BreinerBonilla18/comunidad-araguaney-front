@@ -83,7 +83,9 @@ function AssignSpokepersonModal({
         }}
       >
         <FaUserPlus className="text-brand-primary" />
-        {selectedCitizen ? "Completar Asignación" : "Asignar Ciudadano como Vocero"}
+        {selectedCitizen
+          ? "Completar Asignación"
+          : "Asignar Ciudadano como Vocero"}
       </DialogTitle>
 
       <DialogContent dividers>
@@ -106,7 +108,9 @@ function AssignSpokepersonModal({
               onChange={(e) => setPosition(e.target.value)}
               disabled={loading}
               error={position.trim() === ""}
-              helperText={position.trim() === "" ? "El cargo es obligatorio" : ""}
+              helperText={
+                position.trim() === "" ? "El cargo es obligatorio" : ""
+              }
             />
           </Box>
         ) : (
@@ -199,7 +203,9 @@ function AssignSpokepersonModal({
               Volver
             </Button>
             <Button
-              onClick={() => onAssign(selectedCitizen, position)}
+              onClick={() => {
+                onAssign(selectedCitizen, position, setSelectedCitizen);
+              }}
               variant="contained"
               color="primary"
               disabled={loading || !position.trim()}

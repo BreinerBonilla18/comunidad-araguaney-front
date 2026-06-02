@@ -16,10 +16,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import {
   normalizeText,
-  normalizeVenezuelanDocumentId,
   validateBirthDate,
   validateFullName,
-  validateVenezuelanDocumentId,
 } from "../../../../utils/functions";
 
 function MemberManagementModal({
@@ -30,17 +28,19 @@ function MemberManagementModal({
   onSave,
 }) {
   const fullNameError = validateFullName(memberForm.fullName);
-  const documentIdError = validateVenezuelanDocumentId(memberForm.documentId);
+  const documentIdError = !memberForm.documentId ? "Este campo es requerido" : "";
   const genderError = !normalizeText(memberForm.gender)
     ? "Este campo es requerido"
     : "";
   const birthDateError = validateBirthDate(memberForm.birthDate);
+  const nationalityError = !memberForm.nationality ? "Este campo es requerido" : "";
 
   const hasErrors =
     !!fullNameError ||
     !!documentIdError ||
     !!genderError ||
-    !!birthDateError;
+    !!birthDateError ||
+    !!nationalityError;
 
   return (
     <Dialog
@@ -49,7 +49,7 @@ function MemberManagementModal({
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Registrar / editar miembro</DialogTitle>
+      <DialogTitle>Registrar / Editar miembro</DialogTitle>
 
       <DialogContent dividers>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
@@ -64,25 +64,35 @@ function MemberManagementModal({
             fullWidth
             required
           />
-          <TextField
-            label="Cédula"
-            value={memberForm.documentId}
-            onChange={(e) =>
-              setMemberForm((p) => ({ ...p, documentId: e.target.value }))
-            }
-            onBlur={() => {
-              const normalized = normalizeVenezuelanDocumentId(
-                memberForm.documentId,
-              );
-              if (normalized && normalized !== memberForm.documentId) {
-                setMemberForm((p) => ({ ...p, documentId: normalized }));
-              }
-            }}
-            error={!!documentIdError}
-            helperText={documentIdError || ""}
-            fullWidth
-            required
-          />
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <FormControl fullWidth error={!!nationalityError}>
+              <InputLabel id="member-nationality-label">Nacionalidad</InputLabel>
+              <Select
+                labelId="member-nationality-label"
+                value={memberForm.nationality}
+                label="Nacionalidad"
+                onChange={(e) =>
+                  setMemberForm((p) => ({ ...p, nationality: e.target.value }))
+                }
+              >
+                <MenuItem value="V">Venezolana (V-)</MenuItem>
+                <MenuItem value="E">Extranjera (E-)</MenuItem>
+              </Select>
+              {!!nationalityError && <FormHelperText>{nationalityError}</FormHelperText>}
+            </FormControl>
+            <TextField
+              label="Número de Cédula"
+              value={memberForm.documentId}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9]/g, "");
+                setMemberForm((p) => ({ ...p, documentId: value }));
+              }}
+              error={!!documentIdError}
+              helperText={documentIdError || ""}
+              fullWidth
+              required
+            />
+          </Box>
           <TextField
             label="Teléfono"
             value={memberForm.phone}
