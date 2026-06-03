@@ -124,16 +124,37 @@ export const exportToExcelBeneficiaries = (data, benefitType) => {
 
 /* ----------------- Exportación de Proyectos ----------------- */
 
-export const exportToPDFProjects = (data) => {
+export const exportToPDFProjects = async (data, logoUrl) => {
   const doc = new jsPDF();
   const date = new Date().toLocaleDateString();
+  const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Configuración de encabezado
-  doc.setFontSize(18);
-  doc.text("REPORTE DE PROYECTOS COMUNITARIOS", 14, 20);
+  try {
+    const logoBase64 = await getBase64Image(logoUrl || '/src/assets/araguaney-img.png');
+    doc.addImage(logoBase64, 'PNG', 15, 10, 35, 35);
+    doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 35, 35);
+  } catch (error) {
+    console.warn("No se pudo cargar la imagen del Araguaney", error);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("COMUNIDAD EL ARAGUANEY", pageWidth / 2, 25, { align: "center" });
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("República Bolivariana de Venezuela", pageWidth / 2, 45, { align: "center" });
+  doc.text("Ministerio del Poder para las comunas y Movimientos Sociales", pageWidth / 2, 50, { align: "center" });
+  doc.text("Rubio-Municipio Junín-Estado Táchira", pageWidth / 2, 55, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("REPORTE DE PROYECTOS COMUNITARIOS", pageWidth / 2, 70, { align: "center" });
+
   doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(100);
-  doc.text(`Fecha de reporte: ${date}`, 14, 30);
+  doc.text(`Fecha de reporte: ${date}`, 15, 80);
 
   // Generación de la tabla
   const tableColumn = ["Nombre del Proyecto", "Descripción", "Estado", "Costo Estimado", "Fecha Inicio"];
@@ -148,7 +169,7 @@ export const exportToPDFProjects = (data) => {
   autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
-    startY: 40,
+    startY: 90,
     theme: "grid",
     headStyles: { fillColor: [25, 118, 210] }, // Color Primary de MUI
   });
@@ -189,16 +210,38 @@ const getTransactionType = (type) => {
   }
 };
 
-export const exportToPDFFinances = (data) => {
+export const exportToPDFFinances = async (data, logoUrl) => {
   const doc = new jsPDF();
   const date = new Date().toLocaleDateString();
+  const pageWidth = doc.internal.pageSize.getWidth();
 
-  // Configuración de encabezado
-  doc.setFontSize(18);
-  doc.text("REPORTE DE FINANZAS COMUNITARIAS", 14, 20);
+  try {
+    const logoBase64 = await getBase64Image(logoUrl || '/src/assets/araguaney-img.png');
+    doc.addImage(logoBase64, 'PNG', 15, 10, 35, 35);
+    doc.addImage(logoBase64, 'PNG', pageWidth - 50, 10, 35, 35);
+  } catch (error) {
+    console.warn("No se pudo cargar la imagen del Araguaney", error);
+  }
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
+  doc.text("COMUNIDAD EL ARAGUANEY", pageWidth / 2, 25, { align: "center" });
+
+  doc.setFontSize(10);
+  doc.setFont("helvetica", "normal");
+  doc.text("República Bolivariana de Venezuela", pageWidth / 2, 45, { align: "center" });
+  doc.text("Ministerio del Poder para las comunas y Movimientos Sociales", pageWidth / 2, 50, { align: "center" });
+  doc.text("Rubio-Municipio Junín-Estado Táchira", pageWidth / 2, 55, { align: "center" });
+
+  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.text("REPORTE DE FINANZAS COMUNITARIAS", pageWidth / 2, 70, { align: "center" });
+
   doc.setFontSize(11);
+  doc.setFont("helvetica", "normal");
   doc.setTextColor(100);
-  doc.text(`Fecha de reporte: ${date}`, 14, 30);
+  doc.text(`Fecha de reporte: ${date}`, 15, 80);
+
   // Generación de la tabla
   const tableColumn = ["Concepto", "Monto", "Tipo de Transacción" ,"Fecha"];
   const tableRows = data.map((f) => [
@@ -211,7 +254,7 @@ export const exportToPDFFinances = (data) => {
   autoTable(doc, {
     head: [tableColumn],
     body: tableRows,
-    startY: 40,
+    startY: 90,
     theme: "grid",
     headStyles: { fillColor: [25, 118, 210] }, // Color Primary de MUI
   });

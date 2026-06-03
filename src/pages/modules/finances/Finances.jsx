@@ -7,12 +7,15 @@ import {
   TextField,
   Typography,
   MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { LinearProgress } from "@mui/material";
 /* ----------------- icons ----------------- */
-import { FaWallet, FaFilePdf, FaFileCsv, FaPlus } from "react-icons/fa";
+import { FaWallet, FaFileCsv, FaPlus } from "react-icons/fa";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
 import {
@@ -31,6 +34,7 @@ import FinanceManagementModal from "./modals/FinanceManagementModal";
 import TableFinances from "./components/TableFinances";
 import ModalSuccess from "../../../modals/ModalSucces";
 import ModalError from "../../../modals/ModalError";
+import ExportFinancesModal from "./modals/ExportFinancesModal";
 
 const emptyFinanceForm = {
   description: "",
@@ -42,7 +46,9 @@ const emptyFinanceForm = {
 function Finances() {
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState("todos");
+  const [timePeriod, setTimePeriod] = useState("all");
   const [openModal, setOpenModal] = useState(false);
+  const [exportModalOpen, setExportModalOpen] = useState(false);
   const [financeForm, setFinanceForm] = useState(emptyFinanceForm);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -89,6 +95,17 @@ function Finances() {
 
   const filteredTransactions = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
+    const now = new Date();
+    
+    let startDate;
+    if (timePeriod === "3months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 3));
+    } else if (timePeriod === "6months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 6));
+    } else if (timePeriod === "1year") {
+      startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+    }
+    
     const filtered = transactions.filter((t) => {
       const matchesQuery = [t.description].some((val) =>
         normalizeText(val || "")
@@ -99,14 +116,29 @@ function Finances() {
         filterType === "todos" ||
         (filterType === "ingreso" && t.transaction_type === "income") ||
         (filterType === "egreso" && t.transaction_type === "expense");
-      return matchesQuery && matchesType;
+      
+      const matchesTimePeriod = timePeriod === "all" || 
+        (startDate && new Date(t.transaction_date) >= startDate);
+      
+      return matchesQuery && matchesType && matchesTimePeriod;
     });
 
     return filtered.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
-  }, [transactions, query, filterType, page, rowsPerPage]);
+  }, [transactions, query, filterType, timePeriod, page, rowsPerPage]);
 
   const totalFilteredTransactions = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
+    const now = new Date();
+    
+    let startDate;
+    if (timePeriod === "3months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 3));
+    } else if (timePeriod === "6months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 6));
+    } else if (timePeriod === "1year") {
+      startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+    }
+    
     return transactions.filter((t) => {
       const matchesQuery = [t.description].some((val) =>
         normalizeText(val || "")
@@ -117,9 +149,13 @@ function Finances() {
         filterType === "todos" ||
         (filterType === "ingreso" && t.transaction_type === "income") ||
         (filterType === "egreso" && t.transaction_type === "expense");
-      return matchesQuery && matchesType;
+      
+      const matchesTimePeriod = timePeriod === "all" || 
+        (startDate && new Date(t.transaction_date) >= startDate);
+      
+      return matchesQuery && matchesType && matchesTimePeriod;
     }).length;
-  }, [transactions, query, filterType]);
+  }, [transactions, query, filterType, timePeriod]);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -157,6 +193,58 @@ function Finances() {
     }
   };
 
+  const handleExportPDF = (exportTimePeriod, exportTransactionType) => {
+    const now = new Date();
+    let startDate;
+    if (exportTimePeriod === "3months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 3));
+    } else if (exportTimePeriod === "6months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 6));
+    } else if (exportTimePeriod === "1year") {
+      startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+    }
+    
+    const filteredData = transactions.filter((t) => {
+      const matchesType = exportTransactionType === "all" ||
+        (exportTransactionType === "income" && t.transaction_type === "income") ||
+        (exportTransactionType === "expense" && t.transaction_type === "expense");
+      
+      const matchesTimePeriod = exportTimePeriod === "all" || 
+        (startDate && new Date(t.transaction_date) >= startDate);
+      
+      return matchesType && matchesTimePeriod;
+    });
+    
+    exportToPDFFinances(filteredData);
+    setExportModalOpen(false);
+  };
+
+  const handleExportExcel = (exportTimePeriod, exportTransactionType) => {
+    const now = new Date();
+    let startDate;
+    if (exportTimePeriod === "3months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 3));
+    } else if (exportTimePeriod === "6months") {
+      startDate = new Date(now.setMonth(now.getMonth() - 6));
+    } else if (exportTimePeriod === "1year") {
+      startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+    }
+    
+    const filteredData = transactions.filter((t) => {
+      const matchesType = exportTransactionType === "all" ||
+        (exportTransactionType === "income" && t.transaction_type === "income") ||
+        (exportTransactionType === "expense" && t.transaction_type === "expense");
+      
+      const matchesTimePeriod = exportTimePeriod === "all" || 
+        (startDate && new Date(t.transaction_date) >= startDate);
+      
+      return matchesType && matchesTimePeriod;
+    });
+    
+    exportToExcelFinances(filteredData);
+    setExportModalOpen(false);
+  };
+
   const financeSummary = [
     {
       title: "Total Ingresos",
@@ -181,7 +269,7 @@ function Finances() {
 
   useEffect(() => {
     setPage(0);
-  }, [query, filterType]);
+  }, [query, filterType, timePeriod]);
 
   useEffect(() => {
     fetchData();
@@ -202,16 +290,9 @@ function Finances() {
             <Button
               variant="outlined"
               startIcon={<FaFileCsv />}
-              onClick={() => exportToExcelFinances(transactions)}
+              onClick={() => setExportModalOpen(true)}
             >
-              Exportar Excel
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<FaFilePdf />}
-              onClick={() => exportToPDFFinances(transactions)}
-            >
-              Exportar PDF
+              Exportar
             </Button>
             <Button
               variant="contained"
@@ -259,6 +340,19 @@ function Finances() {
                 <MenuItem value="ingreso">Ingresos</MenuItem>
                 <MenuItem value="egreso">Egresos</MenuItem>
               </TextField>
+              <FormControl sx={{ minWidth: 200 }}>
+                <InputLabel>Período</InputLabel>
+                <Select
+                  value={timePeriod}
+                  label="Período"
+                  onChange={(e) => setTimePeriod(e.target.value)}
+                >
+                  <MenuItem value="all">Todo el historial</MenuItem>
+                  <MenuItem value="3months">Últimos 3 meses</MenuItem>
+                  <MenuItem value="6months">Últimos 6 meses</MenuItem>
+                  <MenuItem value="1year">Último año</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
 
             <Divider />
@@ -289,6 +383,14 @@ function Finances() {
         financeForm={financeForm}
         setFinanceForm={setFinanceForm}
         onSave={handleSaveFinance}
+      />
+
+      <ExportFinancesModal
+        openModal={exportModalOpen}
+        handleCloseModal={() => setExportModalOpen(false)}
+        onExportPDF={handleExportPDF}
+        onExportExcel={handleExportExcel}
+        loading={loading}
       />
 
       <ModalSuccess

@@ -17,9 +17,14 @@ import {
   IconButton,
   Tooltip,
   TablePagination,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  FormHelperText,
 } from "@mui/material";
 import { FaUserPlus } from "react-icons/fa";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { normalizeText } from "../../../../utils/functions";
 
 function AssignSpokepersonModal({
@@ -28,20 +33,29 @@ function AssignSpokepersonModal({
   citizens,
   onAssign,
   loading,
+  isThereMainSpokesPerson
 }) {
   const [query, setQuery] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selectedCitizen, setSelectedCitizen] = useState(null);
   const [position, setPosition] = useState("");
+  const [rank, setRank] = useState("secondary");
 
   const handleClose = () => {
     setSelectedCitizen(null);
     setPosition("");
+    setRank("secondary");
     setQuery("");
     setPage(0);
     handleCloseModal();
   };
+
+   useEffect(() => {
+    if(isThereMainSpokesPerson) {
+      setRank("secondary")
+    }
+   }, [isThereMainSpokesPerson])
 
   const filteredCitizens = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
@@ -112,6 +126,20 @@ function AssignSpokepersonModal({
                 position.trim() === "" ? "El cargo es obligatorio" : ""
               }
             />
+            <FormControl fullWidth error={!rank}>
+              <InputLabel id="rank-label">Rango</InputLabel>
+              <Select
+                labelId="rank-label"
+                value={rank}
+                label="Rango"
+                onChange={(e) => setRank(e.target.value)}
+                disabled={loading || isThereMainSpokesPerson}
+              >
+                <MenuItem value="main">Principal</MenuItem>
+                <MenuItem value="secondary">Secundario</MenuItem>
+              </Select>
+              {!rank && <FormHelperText>El rango es obligatorio</FormHelperText>}
+            </FormControl>
           </Box>
         ) : (
           <>
@@ -195,7 +223,11 @@ function AssignSpokepersonModal({
         {selectedCitizen ? (
           <>
             <Button
-              onClick={() => setSelectedCitizen(null)}
+              onClick={() => {
+                setSelectedCitizen(null);
+                setRank("secondary");
+                setPosition("")
+              }}
               variant="outlined"
               color="primary"
               disabled={loading}
@@ -204,11 +236,13 @@ function AssignSpokepersonModal({
             </Button>
             <Button
               onClick={() => {
-                onAssign(selectedCitizen, position, setSelectedCitizen);
+                onAssign(selectedCitizen, position, rank, setSelectedCitizen);
+                setPosition("");
+                setRank("secondary");
               }}
               variant="contained"
               color="primary"
-              disabled={loading || !position.trim()}
+              disabled={loading || !position.trim() || !rank}
             >
               Confirmar
             </Button>

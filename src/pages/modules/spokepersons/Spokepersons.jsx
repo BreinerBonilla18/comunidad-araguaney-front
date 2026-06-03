@@ -64,6 +64,8 @@ function Spokepersons() {
     );
   }, [spokepersons, query]);
 
+  const isThereMainSpokesPerson = spokepersons.some((s) => s.rank == "main")
+
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
@@ -77,7 +79,7 @@ function Spokepersons() {
       if (citizensRes.success) {
         // Filtramos ciudadanos que ya son voceros para que no aparezcan en la lista de asignación
         const existingSpokepersonIds = new Set(
-          spokepersonsRes.data.map((s) => s.id),
+          spokepersonsRes.data.map((s) => s.citizen_id),
         );
         const availableCitizens = citizensRes.data.filter(
           (c) => !existingSpokepersonIds.has(c.id),
@@ -99,10 +101,10 @@ function Spokepersons() {
     setOpenModal(false);
   };
 
-  const handleAssignSpokeperson = async (citizen, position, setSelectedCitizen) => {
+  const handleAssignSpokeperson = async (citizen, position, rank, setSelectedCitizen) => {
     try {
       setLoading(true);
-      const response = await assignSpokeperson(citizen.id, position);
+      const response = await assignSpokeperson(citizen.id, position, rank);
       if (response.success) {
         setSuccessModal({
           open: true,
@@ -224,6 +226,7 @@ function Spokepersons() {
         citizens={citizens}
         onAssign={handleAssignSpokeperson}
         loading={loading}
+        isThereMainSpokesPerson={isThereMainSpokesPerson}
       />
 
       <ModalDelete
