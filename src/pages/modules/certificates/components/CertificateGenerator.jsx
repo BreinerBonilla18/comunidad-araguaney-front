@@ -12,12 +12,14 @@ import {
 } from "@mui/material";
 import { useState, useCallback } from "react";
 import { getSpokepersons } from "../../../../api/spokepersons";
-import { exportResidencyCertificate } from "../../../../utils/exportUtils";
+import { exportResidencyCertificate, exportGoodConductCertificate } from "../../../../utils/exportUtils";
 import araguaneyLogo from "../../../../assets/araguaney-img.png";
 import ResidenceCertificateFormModal from "../modals/ResidenceCertificateFormModal";
+import GoodConductCertificateFormModal from "../modals/GoodConductCertificateFormModal";
 
 function CertificateGenerator({ selectedResident }) {
   const [openResidencyModal, setOpenResidencyModal] = useState(false);
+  const [openGoodConductModal, setOpenGoodConductModal] = useState(false);
   const [spokepersons, setSpokepersons] = useState([]);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -25,6 +27,7 @@ function CertificateGenerator({ selectedResident }) {
     address: "",
     residencyYears: "0",
     residencyMonths: "0",
+    conductDescription: "",
     issueDate: new Date().toISOString().split("T")[0],
   });
 
@@ -52,6 +55,20 @@ function CertificateGenerator({ selectedResident }) {
     }
   };
 
+  const handleOpenGoodConductModal = () => {
+    if (selectedResident) {
+      setFormData((prev) => ({
+        ...prev,
+        fullName: selectedResident.fullName,
+        documentId: selectedResident.documentId,
+        address: selectedResident.address || "",
+        conductDescription: "",
+      }));
+      setOpenGoodConductModal(true);
+      fetchSpokepersons();
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -61,6 +78,12 @@ function CertificateGenerator({ selectedResident }) {
     const dataToExport = customData || formData;
     await exportResidencyCertificate(dataToExport, spokepersons, araguaneyLogo);
     setOpenResidencyModal(false);
+  };
+
+  const handleExportGoodConduct = async (customData) => {
+    const dataToExport = customData || formData;
+    await exportGoodConductCertificate(dataToExport, spokepersons, araguaneyLogo);
+    setOpenGoodConductModal(false);
   };
 
   const residentDetails = [
@@ -171,11 +194,7 @@ function CertificateGenerator({ selectedResident }) {
             fontSize: "1rem",
             boxShadow: 2,
           }}
-          onClick={() =>
-            alert(
-              `Generando Constancia de Buena Conducta para ${selectedResident.fullName}`,
-            )
-          }
+          onClick={handleOpenGoodConductModal}
         >
           Constancia Buena Conducta (PDF)
         </Button>
@@ -184,6 +203,13 @@ function CertificateGenerator({ selectedResident }) {
         setOpenResidencyModal={setOpenResidencyModal}
         handleExportResidency={handleExportResidency}
         openResidencyModal={openResidencyModal}
+        handleInputChange={handleInputChange}
+        formData={formData}
+      />
+      <GoodConductCertificateFormModal
+        setOpenGoodConductModal={setOpenGoodConductModal}
+        handleExportGoodConduct={handleExportGoodConduct}
+        openGoodConductModal={openGoodConductModal}
         handleInputChange={handleInputChange}
         formData={formData}
       />
