@@ -24,8 +24,8 @@ import {
 import BeneficiariesExporterModal from "./modals/BeneficiariesExporterModal";
 import StartBenefitDayModal from "./modals/StartBenefitDayModal";
 import TableBeneficiaries from "./components/TableBeneficiaries";
-import EndBenefitDayModal from "./modals/EndBenefitDayModal";
 import ConfirmDeliveryModal from "./modals/ConfirmDeliveryModal";
+import EndBenefitDayModal from "./modals/EndBenefitDayModal";
 
 function SocialBenefits() {
   const [query, setQuery] = useState("");
@@ -79,7 +79,7 @@ function SocialBenefits() {
       setConfirmModal({ open: true, id, name });
     } else {
       try {
-        const response = await markBenefitDelivered(id, "pending", null, null);
+        const response = await markBenefitDelivered(id, "pending", benefitType, null, 0);
         if (response.success) {
           setBeneficiaries((prev) =>
             prev.map((b) => (b.id === id ? { ...b, status: "pending", quantity: null, cylinderNumber: null } : b)),
@@ -91,13 +91,14 @@ function SocialBenefits() {
     }
   };
 
-  const handleConfirmDelivery = async (quantity, cylinderNumber) => {
+  const handleConfirmDelivery = async (quantity, cylinders) => {
     try {
       const { id } = confirmModal;
-      const response = await markBenefitDelivered(id, "delivered", quantity, cylinderNumber);
+      const cylinderData = Array.isArray(cylinders) ? cylinders : null;
+      const response = await markBenefitDelivered(id, "delivered", benefitType, cylinderData, quantity);
       if (response.success) {
         setBeneficiaries((prev) =>
-          prev.map((b) => (b.id === id ? { ...b, status: "delivered", quantity, cylinderNumber } : b)),
+          prev.map((b) => (b.id === id ? { ...b, status: "delivered", quantity, cylinderNumber: cylinderData } : b)),
         );
       }
     } catch (error) {

@@ -53,7 +53,23 @@ function TableBeneficiaries({
               />
             </TableCell>
             <TableCell>{b.status === "delivered" ? b.quantity || 1 : "-"}</TableCell>
-            {isGas && <TableCell>{b.status === "delivered" ? b.cylinderNumber || "-" : "-"}</TableCell>}
+            {isGas && (
+              <TableCell>
+                {b.status === "delivered" && b.cylinderNumber ? (
+                  Array.isArray(b.cylinderNumber) ? (
+                    b.cylinderNumber.map((cyl, idx) => (
+                      <div key={idx} style={{ fontSize: '12px' }}>
+                        {cyl.cylinder_code} ({cyl.weight_kg}kg)
+                      </div>
+                    ))
+                  ) : (
+                    b.cylinderNumber
+                  )
+                ) : (
+                  "-"
+                )}
+              </TableCell>
+            )}
             <TableCell align="right">
               <FormControlLabel
                 control={

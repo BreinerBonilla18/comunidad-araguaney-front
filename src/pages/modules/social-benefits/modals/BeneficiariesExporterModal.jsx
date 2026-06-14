@@ -20,6 +20,7 @@ function BeneficiariesExporterModal({
   benefitType,
 }) {
   const [spokepersons, setSpokepersons] = useState([]);
+  const [hasNotExported, setHasNotExported] = useState(true)
 
   const fetchSpokepersons = useCallback(async () => {
     try {
@@ -39,7 +40,7 @@ function BeneficiariesExporterModal({
   }, [open, fetchSpokepersons]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open={open} fullWidth maxWidth="xs">
       <DialogTitle sx={{ textAlign: "center", fontWeight: "bold" }}>
         ¡Jornada Finalizada!
       </DialogTitle>
@@ -64,9 +65,10 @@ function BeneficiariesExporterModal({
               variant="outlined"
               color="error"
               startIcon={<FaFilePdf />}
-              onClick={() =>
+              onClick={() => {
                 exportToPDFBeneficiaries(beneficiaries, benefitType, spokepersons, araguaneyLogo)
-              }
+                setHasNotExported(false)
+              }}
               sx={{ py: 1.5 }}
             >
               Descargar PDF
@@ -76,8 +78,10 @@ function BeneficiariesExporterModal({
               variant="outlined"
               color="success"
               startIcon={<FaFileExcel />}
-              onClick={() =>
+              onClick={() => {
                 exportToExcelBeneficiaries(beneficiaries, benefitType)
+                setHasNotExported(false)
+              }
               }
               sx={{ py: 1.5 }}
             >
@@ -87,7 +91,7 @@ function BeneficiariesExporterModal({
         </Box>
       </DialogContent>
       <DialogActions sx={{ justifyContent: "center", p: 3 }}>
-        <Button variant="contained" onClick={onClose} sx={{ px: 4 }}>
+        <Button variant="contained" disabled={hasNotExported} onClick={() => { onClose(), setHasNotExported(true) }} sx={{ px: 4 }}>
           Cerrar
         </Button>
       </DialogActions>

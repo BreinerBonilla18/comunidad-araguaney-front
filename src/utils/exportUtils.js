@@ -52,7 +52,18 @@ export const exportToPDFBeneficiaries = async (data, benefitType, spokepersons =
       b.status === "delivered" ? (b.quantity || 1) : "-",
     ];
     if (isGas) {
-      row.push(b.status === "delivered" ? (b.cylinderNumber || "-") : "-");
+      if (b.status === "delivered" && b.cylinderNumber) {
+        if (Array.isArray(b.cylinderNumber)) {
+          const cylinderDetails = b.cylinderNumber
+            .map(c => `${c.cylinder_code} (${c.weight_kg}kg)`)
+            .join(", ");
+          row.push(cylinderDetails);
+        } else {
+          row.push(b.cylinderNumber);
+        }
+      } else {
+        row.push("-");
+      }
     }
     return row;
   });
@@ -109,7 +120,18 @@ export const exportToExcelBeneficiaries = (data, benefitType) => {
       "Cantidad": b.status === "delivered" ? (b.quantity || 1) : "-",
     };
     if (isGas) {
-      row["Nº Bombona"] = b.status === "delivered" ? (b.cylinderNumber || "-") : "-";
+      if (b.status === "delivered" && b.cylinderNumber) {
+        if (Array.isArray(b.cylinderNumber)) {
+          const cylinderDetails = b.cylinderNumber
+            .map(c => `${c.cylinder_code} (${c.weight_kg}kg)`)
+            .join(", ");
+          row["Nº Bombona"] = cylinderDetails;
+        } else {
+          row["Nº Bombona"] = b.cylinderNumber;
+        }
+      } else {
+        row["Nº Bombona"] = "-";
+      }
     }
     row["Fecha Reporte"] = date;
     return row;
