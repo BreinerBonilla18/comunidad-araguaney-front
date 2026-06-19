@@ -1,12 +1,15 @@
 import {
   Box,
   Button,
+  Checkbox,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
   FormControl,
+  FormControlLabel,
   FormHelperText,
+  FormGroup,
   InputLabel,
   MenuItem,
   Select,
@@ -107,15 +110,58 @@ function MemberManagementModal({
               labelId="member-gender-label"
               value={memberForm.gender}
               label="Género"
-              onChange={(e) =>
-                setMemberForm((p) => ({ ...p, gender: e.target.value }))
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                setMemberForm((p) => ({
+                  ...p,
+                  gender: value,
+                  is_pregnant: value === "Femenino" ? p.is_pregnant : false,
+                  is_lactating: value === "Femenino" ? p.is_lactating : false,
+                }));
+              }}
             >
               <MenuItem value="Masculino">Masculino</MenuItem>
               <MenuItem value="Femenino">Femenino</MenuItem>
             </Select>
             {!!genderError && <FormHelperText>{genderError}</FormHelperText>}
           </FormControl>
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={memberForm.is_pregnant}
+                  disabled={memberForm.gender !== "Femenino"}
+                  onChange={(e) =>
+                    setMemberForm((p) => ({ ...p, is_pregnant: e.target.checked }))
+                  }
+                />
+              }
+              label="Embarazada"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={memberForm.is_lactating}
+                  disabled={memberForm.gender !== "Femenino"}
+                  onChange={(e) =>
+                    setMemberForm((p) => ({ ...p, is_lactating: e.target.checked }))
+                  }
+                />
+              }
+              label="Lactando"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={memberForm.is_disabled}
+                  onChange={(e) =>
+                    setMemberForm((p) => ({ ...p, is_disabled: e.target.checked }))
+                  }
+                />
+              }
+              label="Discapacitado/a"
+            />
+          </FormGroup>
           <DatePicker
             label="Fecha de nacimiento"
             value={memberForm.birthDate ? dayjs(memberForm.birthDate) : null}

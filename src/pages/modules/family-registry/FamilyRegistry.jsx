@@ -2,16 +2,23 @@
 import {
   Box,
   Button,
-  Divider,
   LinearProgress,
   Paper,
   TextField,
-  Typography
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useMemo, useState, useEffect, useCallback } from "react";
 /* ----------------- icons ----------------- */
-import { FaFileCsv, FaFilePdf, FaPlus, FaUsers } from "react-icons/fa";
+import { FaFileCsv, FaFilePdf, FaPlus, FaUsers, FaChevronDown, FaChevronUp, FaHome, FaHeartbeat, FaBaby, FaMale, FaFemale, FaWheelchair, FaChild } from "react-icons/fa";
+import { MdElderly } from "react-icons/md";
 /* ----------------- API ----------------- */
 import {
   getAllFamilyHeads,
@@ -20,6 +27,7 @@ import {
   updateCitizen,
   deleteCitizen,
   getAllCitizens,
+  getStadistics,
 } from "../../../api/citizens";
 /* ----------------- utils ----------------- */
 import { normalizeText } from "../../../utils/functions";
@@ -27,6 +35,7 @@ import {
   exportToExcelCitizens,
   exportToPDFCitizens,
 } from "../../../utils/exportUtils";
+import { COLORS } from "../../../const/colors";
 /* --------------- components -------------- */
 import MemberManagementModal from "./modals/MemberManagementModal";
 import FamilyHeadManagement from "./modals/FamilyHeadManagement";
@@ -45,6 +54,9 @@ const emptyHeadForm = {
   gender: "",
   birthDate: "",
   nationality: "V",
+  is_pregnant: false,
+  is_lactating: false,
+  is_disabled: false,
 };
 
 const emptyMemberForm = {
@@ -54,6 +66,9 @@ const emptyMemberForm = {
   gender: "",
   birthDate: "",
   nationality: "V",
+  is_pregnant: false,
+  is_lactating: false,
+  is_disabled: false,
 };
 
 function FamilyRegistry() {
@@ -67,6 +82,19 @@ function FamilyRegistry() {
   const [memberForm, setMemberForm] = useState(emptyMemberForm);
   const [allCitizens, setAllCitizens] = useState([]);
   const [query, setQuery] = useState("");
+  // Filters: gender, age groups, pregnancy/lactation/disabled
+  const [genderFilter, setGenderFilter] = useState("all"); // 'all' | 'Masculino' | 'Femenino'
+  const [ageGroupsFilter, setAgeGroupsFilter] = useState([]); // includes: 'children','adolescents','adults','elders'
+  const [pregnantFilter, setPregnantFilter] = useState(false);
+  const [lactatingFilter, setLactatingFilter] = useState(false);
+  const [disabledFilter, setDisabledFilter] = useState(false);
+
+  // helper to toggle age groups
+  const handleAgeGroupToggle = (group) => {
+    setAgeGroupsFilter((prev) =>
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]
+    );
+  };
   const [familyPage, setFamilyPage] = useState(0);
   const [familyRowsPerPage, setFamilyRowsPerPage] = useState(10);
   const [memberPage, setMemberPage] = useState(0);
@@ -91,6 +119,9 @@ function FamilyRegistry() {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [exportActionType, setExportActionType] = useState(null);
   const [exportSelection, setExportSelection] = useState("all"); // 'all' or 'heads'
+  const [stats, setStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [showExtraStats, setShowExtraStats] = useState(false);
 
   const fetchAllCitizens = useCallback(async () => {
     try {
@@ -100,6 +131,20 @@ function FamilyRegistry() {
       }
     } catch (error) {
       console.error("Error fetching citizens:", error);
+    }
+  }, []);
+
+  const fetchStatistics = useCallback(async () => {
+    setStatsLoading(true);
+    try {
+      const response = await getStadistics();
+      if (response.success) {
+        setStats(response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+    } finally {
+      setStatsLoading(false);
     }
   }, []);
 
@@ -115,6 +160,9 @@ function FamilyRegistry() {
           phone: member.phone_number,
           gender: member.gender === "M" ? "Masculino" : "Femenino",
           birthDate: member.birth_date,
+          is_pregnant: member.is_pregnant ?? false,
+          is_lactating: member.is_lactating ?? false,
+          is_disabled: member.is_disabled ?? false,
         }));
 
         setFamilies((prev) =>
@@ -141,6 +189,9 @@ function FamilyRegistry() {
             address: head.house_number,
             gender: head.gender === "M" ? "Masculino" : "Femenino",
             birthDate: head.birth_date,
+            is_pregnant: head.is_pregnant ?? false,
+            is_lactating: head.is_lactating ?? false,
+            is_disabled: head.is_disabled ?? false,
           },
           members: [],
         }));
@@ -180,21 +231,130 @@ function FamilyRegistry() {
     return result;
   }, [families]);
 
+  
+  const toRawFromHead = (head) => {
+    return {
+      first_name: head?.fullName?.split(" ")[0] || "",
+      last_name: head?.fullName?.split(" ").slice(1).join(" ") || "",
+      id_number: head?.documentId,
+      phone_number: head?.phone,
+      house_number: head?.address,
+      gender: head?.gender === "Masculino" ? "M" : head?.gender === "Femenino" ? "F" : head?.gender,
+      birth_date: head?.birthDate,
+      is_pregnant: head?.is_pregnant,
+      is_lactating: head?.is_lactating,
+      is_disabled: head?.is_disabled,
+    };
+  };
+
+  const toRawFromMember = (m) => {
+    return {
+      first_name: (m?.fullName || "").split(" ")[0] || "",
+      last_name: (m?.fullName || "").split(" ").slice(1).join(" ") || "",
+      id_number: m?.documentId,
+      phone_number: m?.phone,
+      house_number: m?.house_number,
+      gender: m?.gender === "Masculino" ? "M" : m?.gender === "Femenino" ? "F" : m?.gender,
+      birth_date: m?.birthDate || m?.birth_date,
+      is_pregnant: m?.is_pregnant,
+      is_lactating: m?.is_lactating,
+      is_disabled: m?.is_disabled,
+    };
+  };
+
+  const normalizeCitizenForFiltering = (citizen) => {
+    return {
+      first_name: citizen?.first_name || citizen?.firstName || (citizen?.fullName || "").split(" ")[0] || "",
+      last_name: citizen?.last_name || citizen?.lastName || (citizen?.fullName || "").split(" ").slice(1).join(" ") || "",
+      id_number: citizen?.id_number ?? citizen?.documentId ?? citizen?.idNumber ?? "",
+      phone_number: citizen?.phone_number ?? citizen?.phone ?? "",
+      house_number: citizen?.house_number ?? citizen?.houseNumber ?? citizen?.address ?? "",
+      gender:
+        citizen?.gender === "M"
+          ? "M"
+          : citizen?.gender === "F"
+          ? "F"
+          : citizen?.gender,
+      birth_date: citizen?.birth_date ?? citizen?.birthDate ?? null,
+      is_pregnant:
+        citizen?.is_pregnant ?? citizen?.isPregnant ?? citizen?.embarazada ?? citizen?.delivery_status,
+      is_lactating: citizen?.is_lactating ?? citizen?.isLactating ?? citizen?.lactating,
+      is_disabled: citizen?.is_disabled ?? citizen?.isDisabled ?? citizen?.disabled,
+    };
+  };
+
+      const getAge = (birthDate) => {
+    if (!birthDate) return null;
+    const bd = new Date(birthDate);
+    const diff = Date.now() - bd.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+  };
+
+  const getAgeGroup = (age) => {
+    if (age == null) return null;
+    if (age < 13) return "children";
+    if (age >= 13 && age <= 17) return "adolescents";
+    if (age >= 18 && age <= 59) return "adults";
+    return "elders";
+  };
+
+  const parseBooleanFlag = (obj, keys) => {
+    for (const k of keys) {
+      const v = obj?.[k];
+      if (v === true || v === "true" || v === 1 || v === "1" || v === "si" || v === "Sí" || v === "S") return true;
+      if (v === false || v === "false" || v === 0 || v === "0") return false;
+    }
+    return false;
+  };
+
+  const matchesDemographicFilters = (rawCitizen, textQuery = "") => {
+    const fullName = `${rawCitizen.first_name || ""} ${rawCitizen.last_name || ""}`.toLowerCase();
+    const q = textQuery?.trim().toLowerCase() || "";
+
+    // Text match (if provided)
+    if (q) {
+      const idnum = (rawCitizen.id_number || "").toString().toLowerCase();
+      const phone = (rawCitizen.phone_number || "").toString().toLowerCase();
+      if (!(fullName.includes(q) || idnum.includes(q) || phone.includes(q))) return false;
+    }
+
+    // Gender
+    if (genderFilter && genderFilter !== "all") {
+      const g = (rawCitizen.gender || "").toString();
+      if (g !== genderFilter && (g !== (genderFilter === "Masculino" ? "M" : "F"))) return false;
+    }
+
+    // Age groups
+    if (ageGroupsFilter.length > 0) {
+      const age = getAge(rawCitizen.birth_date || rawCitizen.birthDate);
+      const group = getAgeGroup(age);
+      if (!ageGroupsFilter.includes(group)) return false;
+    }
+
+    // Flags
+    if (pregnantFilter) {
+      if (!parseBooleanFlag(rawCitizen, ["is_pregnant", "isPregnant", "embarazada", "delivery_status"])) return false;
+    }
+    if (lactatingFilter) {
+      if (!parseBooleanFlag(rawCitizen, ["is_lactating", "isLactating", "lactating"])) return false;
+    }
+    if (disabledFilter) {
+      if (!parseBooleanFlag(rawCitizen, ["is_disabled", "isDisabled", "disabled"])) return false;
+    }
+
+    return true;
+  };
+
+
   const filteredAllMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
     const isSearching = !!q;
 
     if (isSearching) {
-      // Search mode: filter all members and apply pagination
+      // Search mode: filter all members by text + demographic filters and apply pagination
       const filtered = allMembers.filter((member) => {
-        return [
-          member.fullName,
-          member.documentId,
-          member.phone,
-          member.familyHeadName,
-        ]
-          .filter(Boolean)
-          .some((v) => v.toString().toLowerCase().includes(q));
+        const raw = toRawFromMember(member);
+        return matchesDemographicFilters(raw, query);
       });
 
       return filtered.slice(
@@ -202,87 +362,59 @@ function FamilyRegistry() {
         memberPage * memberRowsPerPage + memberRowsPerPage,
       );
     } else {
-      // Normal mode: show selected family members with pagination
+      // Normal mode: show selected family members with demographic filters and pagination
       const familyMembers = selectedFamily?.members ?? [];
-      return familyMembers.slice(
+      const filtered = familyMembers.filter((m) => {
+        const raw = toRawFromMember(m);
+        return matchesDemographicFilters(raw, "");
+      });
+      return filtered.slice(
         memberPage * memberRowsPerPage,
         memberPage * memberRowsPerPage + memberRowsPerPage,
       );
     }
-  }, [allMembers, selectedFamily, query, memberPage, memberRowsPerPage]);
+  }, [allMembers, selectedFamily, query, memberPage, memberRowsPerPage, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
 
   const totalFilteredFamilies = useMemo(() => {
-    const q = normalizeText(query).toLowerCase();
-    if (!q) return families.length;
-
-    return families.filter((f) => {
+    // Count families that match demographic filters (head or any member)
+    const count = (families || []).filter((f) => {
       const head = f?.head ?? {};
-      const members = Array.isArray(f?.members) ? f.members : [];
-      const inHead = [head.fullName, head.documentId, head.phone, head.address]
-        .filter(Boolean)
-        .some((v) => v.toString().toLowerCase().includes(q));
+      const headRaw = toRawFromHead(head);
+      if (matchesDemographicFilters(headRaw, query)) return true;
 
-      const inMembers = members.some((m) => {
-        return [m.fullName, m.documentId, m.phone, m.role, m.relationship]
-          .filter(Boolean)
-          .some((v) => v.toString().toLowerCase().includes(q));
-      });
-      return inHead || inMembers;
+      const members = Array.isArray(f?.members) ? f.members : [];
+      const anyMemberMatches = members.some((m) => matchesDemographicFilters(toRawFromMember(m), query));
+      return anyMemberMatches;
     }).length;
-  }, [families, query]);
+
+    return count;
+  }, [families, query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
 
   const totalFilteredMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
     const isSearching = !!q;
 
     if (isSearching) {
-      // Search mode: count all filtered members
-      return allMembers.filter((member) => {
-        return [
-          member.fullName,
-          member.documentId,
-          member.phone,
-          member.familyHeadName,
-        ]
-          .filter(Boolean)
-          .some((v) => v.toString().toLowerCase().includes(q));
-      }).length;
+      return allMembers.filter((member) => matchesDemographicFilters(toRawFromMember(member), query)).length;
     } else {
-      // Normal mode: count selected family members
-      return selectedFamily?.members?.length ?? 0;
+      const members = selectedFamily?.members ?? [];
+      return members.filter((m) => matchesDemographicFilters(toRawFromMember(m), "")).length;
     }
-  }, [allMembers, selectedFamily, query]);
+  }, [allMembers, selectedFamily, query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
 
   const filteredFamilies = useMemo(() => {
-    const q = normalizeText(query).toLowerCase();
-    const filtered = !q
-      ? families
-      : families.filter((f) => {
-          const head = f?.head ?? {};
-          const members = Array.isArray(f?.members) ? f.members : [];
-          const inHead = [
-            head.fullName,
-            head.documentId,
-            head.phone,
-            head.address,
-          ]
-            .filter(Boolean)
-            .some((v) => v.toString().toLowerCase().includes(q));
+    const filtered = (families || []).filter((f) => {
+      const head = f?.head ?? {};
+      if (matchesDemographicFilters(toRawFromHead(head), query)) return true;
+      const members = Array.isArray(f?.members) ? f.members : [];
+      return members.some((m) => matchesDemographicFilters(toRawFromMember(m), query));
+    });
 
-          const inMembers = members.some((m) => {
-            return [m.fullName, m.documentId, m.phone, m.role, m.relationship]
-              .filter(Boolean)
-              .some((v) => v.toString().toLowerCase().includes(q));
-          });
-          return inHead || inMembers;
-        });
-
-    // Apply pagination to filtered results
     return filtered.slice(
       familyPage * familyRowsPerPage,
       familyPage * familyRowsPerPage + familyRowsPerPage,
     );
-  }, [families, query, familyPage, familyRowsPerPage]);
+  }, [families, query, familyPage, familyRowsPerPage, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
 
   const handleFamilyPageChange = (event, newPage) => {
     setFamilyPage(newPage);
@@ -313,6 +445,9 @@ function FamilyRegistry() {
         house_number: headForm.address,
         gender: headForm.gender === "Masculino" ? "M" : "F",
         birth_date: headForm.birthDate,
+        is_pregnant: headForm.is_pregnant,
+        is_lactating: headForm.is_lactating,
+        is_disabled: headForm.is_disabled,
       };
 
       if (headDialogMode === "create") {
@@ -331,6 +466,7 @@ function FamilyRegistry() {
         });
       }
       setHeadDialogOpen(false);
+      fetchStatistics();
       fetchFamilyHeads();
     } catch (error) {
       console.error("Error saving family head:", error);
@@ -354,6 +490,9 @@ function FamilyRegistry() {
         gender: memberForm.gender === "Masculino" ? "M" : "F",
         birth_date: memberForm.birthDate,
         head_of_household_id: selectedFamilyId,
+        is_pregnant: memberForm.is_pregnant,
+        is_lactating: memberForm.is_lactating,
+        is_disabled: memberForm.is_disabled,
       };
 
       if (memberForm.id) {
@@ -372,6 +511,7 @@ function FamilyRegistry() {
         });
       }
       setMemberDialogOpen(false);
+      fetchStatistics();
       fetchMembers(selectedFamilyId);
     } catch (error) {
       console.error("Error saving member:", error);
@@ -401,6 +541,7 @@ function FamilyRegistry() {
       } else {
         fetchMembers(selectedFamilyId);
       }
+      fetchStatistics();
     } catch (error) {
       console.error("Error deleting citizen:", error);
       setDeleteModal({ ...deleteModal, open: false });
@@ -442,12 +583,12 @@ function FamilyRegistry() {
 
   function parseDocumentId(documentId) {
     if (!documentId) return { nationality: "V", number: "" };
-    
+
     const match = documentId.match(/^([VE])-(\d+)$/);
     if (match) {
       return { nationality: match[1], number: match[2] };
     }
-    
+
     // If the ID doesn't match the expected format, try to extract nationality
     if (documentId.startsWith("V-")) {
       return { nationality: "V", number: documentId.substring(2) };
@@ -455,7 +596,7 @@ function FamilyRegistry() {
     if (documentId.startsWith("E-")) {
       return { nationality: "E", number: documentId.substring(2) };
     }
-    
+
     // Default to Venezuelan if no prefix
     return { nationality: "V", number: documentId };
   }
@@ -479,6 +620,9 @@ function FamilyRegistry() {
       gender: family?.head?.gender ?? "",
       birthDate: family?.head?.birthDate ?? "",
       nationality: nationality,
+      is_pregnant: family?.head?.is_pregnant ?? false,
+      is_lactating: family?.head?.is_lactating ?? false,
+      is_disabled: family?.head?.is_disabled ?? false,
     });
     setSelectedFamilyId(family.id);
     setHeadDialogOpen(true);
@@ -501,23 +645,71 @@ function FamilyRegistry() {
       gender: member.gender ?? "",
       birthDate: member.birthDate ?? "",
       nationality: nationality,
+      is_pregnant: member.is_pregnant ?? false,
+      is_lactating: member.is_lactating ?? false,
+      is_disabled: member.is_disabled ?? false,
     });
     setMemberDialogOpen(true);
   }
 
   const handleExportAction = async () => {
-    let dataToExport = allCitizens;
-    if (exportSelection === "heads") {
-      const headIds = families.map((f) => f.id);
-      dataToExport = allCitizens.filter((c) => headIds.includes(c.id));
-    }
+    try {
+      setExportModalOpen(false);
+      // Decide selection: 'all' (todos los ciudadanos) o 'heads' (jefes)
+      if (exportSelection === "all") {
+        // Export all citizens that match filters (citizen-level strict)
+        const citizensMatching = (allCitizens || [])
+          .map(normalizeCitizenForFiltering)
+          .filter((c) => matchesDemographicFilters(c, query));
+        if (exportActionType === "pdf") {
+          await exportToPDFCitizens(citizensMatching, null);
+        } else {
+          exportToExcelCitizens(citizensMatching);
+        }
+      } else {
+        // Export heads: apply strict head-only filtering for export
+        const headsToExport = (families || []).filter((fam) => {
+          const head = fam.head || {};
+          return matchesDemographicFilters({
+            first_name: head.fullName?.split(" ")[0] || "",
+            last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
+            id_number: head.documentId,
+            phone_number: head.phone,
+            house_number: head.address,
+            gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
+            birth_date: head.birthDate,
+            is_pregnant: head.is_pregnant,
+            is_lactating: head.is_lactating,
+            is_disabled: head.is_disabled,
+          }, query);
+        }).map((f) => {
+          const head = f.head || {};
+          return {
+            id: f.id,
+            id_number: head.documentId,
+            first_name: head.fullName?.split(" ")[0] || "",
+            last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
+            phone_number: head.phone,
+            house_number: head.address,
+            gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
+            birth_date: head.birthDate,
+            is_pregnant: head.is_pregnant,
+            is_lactating: head.is_lactating,
+            is_disabled: head.is_disabled,
+          };
+        });
 
-    if (exportActionType === "excel") {
-      exportToExcelCitizens(dataToExport);
-    } else if (exportActionType === "pdf") {
-      await exportToPDFCitizens(dataToExport);
+        if (exportActionType === "pdf") {
+          await exportToPDFCitizens(headsToExport, null);
+        } else {
+          exportToExcelCitizens(headsToExport);
+        }
+      }
+      setSuccessModal({ open: true, title: "Exportación", message: "Exportación completada." });
+    } catch (error) {
+      console.error("Error during export:", error);
+      setErrorModal({ open: true, title: "Exportación", message: "Error al exportar." });
     }
-    setExportModalOpen(false);
   };
 
   const openExportModal = (type) => {
@@ -535,15 +727,19 @@ function FamilyRegistry() {
   }, []);
 
   useEffect(() => {
+    fetchStatistics();
+  }, []);
+
+  useEffect(() => {
     setFamilyPage(0);
     setMemberPage(0);
-  }, [query]);
+  }, [query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
 
   useEffect(() => {
     if (!query) {
       setMemberPage(0);
     }
-  }, [selectedFamily, query]);
+  }, [selectedFamily, query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
 
   return (
     <Box className="w-full">
@@ -583,7 +779,6 @@ function FamilyRegistry() {
             </Button>
           </Box>
         </Box>
-
         <Paper className="p-4">
           {loading && (
             <Box sx={{ width: "100%", mb: 2 }}>
@@ -591,46 +786,355 @@ function FamilyRegistry() {
             </Box>
           )}
           <Box className="flex flex-col gap-3">
-            <TextField
-              fullWidth
-              label="Buscar por jefe o miembro (nombre, cédula, teléfono...)"
-              disabled={loading}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-
-            <Divider />
-
-            <Box className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <TableFamilyHead
-                filteredFamilies={filteredFamilies}
-                totalCount={totalFilteredFamilies}
-                page={familyPage}
-                rowsPerPage={familyRowsPerPage}
-                onPageChange={handleFamilyPageChange}
-                onRowsPerPageChange={handleFamilyRowsPerPageChange}
-                selectedFamilyId={selectedFamilyId}
-                setSelectedFamilyId={(id) => {
-                  setSelectedFamilyId(id);
-                  fetchMembers(id);
+            <Box className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <Paper
+                className="p-5 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                sx={{
+                  backgroundColor: COLORS.surface.card,
+                  border: `1px solid ${COLORS.surface.border}`,
+                  borderRadius: "1rem",
+                  width: "100%",
                 }}
-                openEditHead={openEditHead}
-                openDeleteHead={openDeleteHead}
-              />
+              >
+                <Box className="flex items-center justify-between mb-4">
+                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                    Población total
+                  </Typography>
+                  <Box
+                    className="p-3 rounded-xl flex items-center justify-center"
+                    sx={{ backgroundColor: "#3b82f615", color: "#3b82f6" }}
+                  >
+                    <FaUsers size={22} />
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                  {statsLoading ? "..." : (stats?.poblacion_total ?? "0")}
+                </Typography>
+              </Paper>
 
-              <TableMembers
-                openCreateMember={openCreateMember}
-                selectedFamily={selectedFamily}
-                filteredMembers={filteredAllMembers}
-                totalCount={totalFilteredMembers}
-                page={memberPage}
-                rowsPerPage={memberRowsPerPage}
-                onPageChange={handleMemberPageChange}
-                onRowsPerPageChange={handleMemberRowsPerPageChange}
-                query={query}
-                openEditMember={openEditMember}
-                openDeleteMember={openDeleteMember}
-              />
+              <Paper
+                className="p-5 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                sx={{
+                  backgroundColor: COLORS.surface.card,
+                  border: `1px solid ${COLORS.surface.border}`,
+                  borderRadius: "1rem",
+                  width: "100%",
+                }}
+              >
+                <Box className="flex items-center justify-between mb-4">
+                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                    Cantidad de familias
+                  </Typography>
+                  <Box
+                    className="p-3 rounded-xl flex items-center justify-center"
+                    sx={{ backgroundColor: "#f59e0b15", color: "#f59e0b" }}
+                  >
+                    <FaHome size={22} />
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                  {statsLoading ? "..." : (stats?.cantidad_familias ?? "0")}
+                </Typography>
+              </Paper>
+
+              <Paper
+                className="p-5 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                sx={{
+                  backgroundColor: COLORS.surface.card,
+                  border: `1px solid ${COLORS.surface.border}`,
+                  borderRadius: "1rem",
+                  width: "100%",
+                }}
+              >
+                <Box className="flex items-center justify-between mb-4">
+                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                    Embarazadas
+                  </Typography>
+                  <Box
+                    className="p-3 rounded-xl flex items-center justify-center"
+                    sx={{ backgroundColor: "#ec489915", color: "#ec4899" }}
+                  >
+                    <FaHeartbeat size={22} />
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                  {statsLoading ? "..." : (stats?.embarazadas ?? "0")}
+                </Typography>
+              </Paper>
+
+              <Paper
+                className="p-5 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                sx={{
+                  backgroundColor: COLORS.surface.card,
+                  border: `1px solid ${COLORS.surface.border}`,
+                  borderRadius: "1rem",
+                  width: "100%",
+                }}
+              >
+                <Box className="flex items-center justify-between mb-4">
+                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                    Lactantes
+                  </Typography>
+                  <Box
+                    className="p-3 rounded-xl flex items-center justify-center"
+                    sx={{ backgroundColor: "#10b98115", color: "#10b981" }}
+                  >
+                    <FaBaby size={22} />
+                  </Box>
+                </Box>
+                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                  {statsLoading ? "..." : (stats?.lactantes ?? "0")}
+                </Typography>
+                </Paper>
+            </Box>
+
+            <Box className="flex justify-end">
+              <Button
+                variant="text"
+                onClick={() => setShowExtraStats((s) => !s)}
+                startIcon={showExtraStats ? <FaChevronUp /> : <FaChevronDown />}
+                sx={{ color: COLORS.text.secondary }}
+              >
+                {showExtraStats ? "Ocultar" : "Ver más"}
+              </Button>
+            </Box>
+
+            {showExtraStats && (
+              <Box className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Niños (Masculino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                      <FaChild size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.niños?.masculino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Niñas (Femenino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
+                      <FaChild size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.niños?.femenino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adolescentes (Masculino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                      <FaMale size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.adolescentes?.masculino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adolescentes (Femenino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
+                      <FaFemale size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.adolescentes?.femenino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos (Masculino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                      <FaMale size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.adultos?.masculino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos (Femenino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#f472b615', color: '#be185d' }}>
+                      <FaFemale size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.adultos?.femenino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos mayores (Masculino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                      <MdElderly size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.adultos_mayores?.masculino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos mayores (Femenino)</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#f472b615', color: '#be185d' }}>
+                      <MdElderly size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.adultos_mayores?.femenino ?? '0')}
+                  </Typography>
+                </Paper>
+
+                <Paper
+                  className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
+                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                >
+                  <Box className="flex items-center justify-between mb-3">
+                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Discapacitados</Typography>
+                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#0ea5e915', color: '#0369a1' }}>
+                      <FaWheelchair size={18} />
+                    </Box>
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
+                    {statsLoading ? '...' : (stats?.discapacitados ?? '0')}
+                  </Typography>
+                </Paper>
+              </Box>
+            )}
+
+            <Box className="flex flex-col gap-3">
+              <Box className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <Box className="flex items-center gap-3 flex-wrap">
+                  <FormControl size="small" sx={{ minWidth: 160 }}>
+                    <InputLabel id="gender-filter-label">Género</InputLabel>
+                    <Select
+                      labelId="gender-filter-label"
+                      value={genderFilter}
+                      label="Género"
+                      onChange={(e) => setGenderFilter(e.target.value)}
+                    >
+                      <MenuItem value="all">Todos</MenuItem>
+                      <MenuItem value="Masculino">Masculino</MenuItem>
+                      <MenuItem value="Femenino">Femenino</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormGroup row>
+                    <FormControlLabel
+                      control={<Checkbox checked={ageGroupsFilter.includes("children")} onChange={() => handleAgeGroupToggle("children")} />}
+                      label="Niños"
+                    />
+                    <FormControlLabel
+                      control={<Checkbox checked={ageGroupsFilter.includes("adolescents")} onChange={() => handleAgeGroupToggle("adolescents")} />}
+                      label="Adolescentes"
+                    />
+                    <FormControlLabel
+                      control={<Checkbox checked={ageGroupsFilter.includes("adults")} onChange={() => handleAgeGroupToggle("adults")} />}
+                      label="Adultos"
+                    />
+                    <FormControlLabel
+                      control={<Checkbox checked={ageGroupsFilter.includes("elders")} onChange={() => handleAgeGroupToggle("elders")} />}
+                      label="Adultos Mayores"
+                    />
+                  </FormGroup>
+                </Box>
+
+                <Box className="flex items-center gap-3">
+                  <FormGroup row>
+                    <FormControlLabel
+                      control={<Checkbox checked={pregnantFilter} onChange={(e) => setPregnantFilter(e.target.checked)} />}
+                      label="Embarazadas"
+                    />
+                    <FormControlLabel
+                      control={<Checkbox checked={lactatingFilter} onChange={(e) => setLactatingFilter(e.target.checked)} />}
+                      label="Lactantes"
+                    />
+                    <FormControlLabel
+                      control={<Checkbox checked={disabledFilter} onChange={(e) => setDisabledFilter(e.target.checked)} />}
+                      label="Discapacitados"
+                    />
+                  </FormGroup>
+                </Box>
+              </Box>
+
+              <Box>
+                <TextField
+                  fullWidth
+                  label="Buscar por jefe o miembro (nombre, cédula, teléfono...)"
+                  disabled={loading}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </Box>
+            </Box>
+            <Box>
+              <Box className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <TableFamilyHead
+                  filteredFamilies={filteredFamilies}
+                  totalCount={totalFilteredFamilies}
+                  page={familyPage}
+                  rowsPerPage={familyRowsPerPage}
+                  onPageChange={handleFamilyPageChange}
+                  onRowsPerPageChange={handleFamilyRowsPerPageChange}
+                  selectedFamilyId={selectedFamilyId}
+                  setSelectedFamilyId={(id) => {
+                    setSelectedFamilyId(id);
+                    fetchMembers(id);
+                  }}
+                  openEditHead={openEditHead}
+                  openDeleteHead={openDeleteHead}
+                />
+
+                <TableMembers
+                  openCreateMember={openCreateMember}
+                  selectedFamily={selectedFamily}
+                  filteredMembers={filteredAllMembers}
+                  totalCount={totalFilteredMembers}
+                  page={memberPage}
+                  rowsPerPage={memberRowsPerPage}
+                  onPageChange={handleMemberPageChange}
+                  onRowsPerPageChange={handleMemberRowsPerPageChange}
+                  query={query}
+                  openEditMember={openEditMember}
+                  openDeleteMember={openDeleteMember}
+                />
+              </Box>
             </Box>
           </Box>
         </Paper>

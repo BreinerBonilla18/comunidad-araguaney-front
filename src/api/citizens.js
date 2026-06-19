@@ -9,6 +9,15 @@ export const getAllFamilyHeads = async () => {
   }
 };
 
+export const getStadistics = async () => {
+  try {
+    const response = await api.get("/citizens/stadistics")
+    return response.data
+  } catch (error) {
+    throw error.response?.data || error.message
+  }
+}
+
 export const getFamilyMembersByHeadId = async (headId) => {
   try {
     const response = await api.get(`/members-by-head/${headId}`);

@@ -230,25 +230,25 @@ function Dashboard() {
               {
                 label: "Cargar Gasto",
                 icon: <FaWallet />,
-                link: "/finanzas",
+                link: "/finances",
                 color: "#8b5cf6",
               },
               {
                 label: "Subir Documento",
                 icon: <FaFileAlt />,
-                link: "/documentos",
+                link: "/documents",
                 color: "#64748b",
               },
               {
                 label: "Emitir Constancia",
                 icon: <FaFileAlt />,
-                link: "/constancias",
+                link: "/certificates",
                 color: "#3b82f6",
               },
               {
                 label: "Nueva Jornada",
                 icon: <FaHandHoldingHeart />,
-                link: "/beneficios",
+                link: "/beneficiaries",
                 color: "#10b981",
               },
             ].map((action, i) => (

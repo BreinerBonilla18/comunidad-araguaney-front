@@ -489,9 +489,6 @@ export const exportGoodConductCertificate = async (data, spokepersons, logoUrl) 
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const date = new Date(data.issueDate || new Date());
-  
-  const day = date.getDate();
-  const month = date.toLocaleString('es-ES', { month: 'long' });
   const year = date.getFullYear();
 
   try {
