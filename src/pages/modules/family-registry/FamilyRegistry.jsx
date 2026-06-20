@@ -657,10 +657,64 @@ function FamilyRegistry() {
       setExportModalOpen(false);
       // Decide selection: 'all' (todos los ciudadanos) o 'heads' (jefes)
       if (exportSelection === "all") {
-        // Export all citizens that match filters (citizen-level strict)
-        const citizensMatching = (allCitizens || [])
-          .map(normalizeCitizenForFiltering)
-          .filter((c) => matchesDemographicFilters(c, query));
+        // Export all citizens (heads and members) that match demographic filters individually
+        // This means: if a head matches, export the head. If a member matches, export the member.
+        // No family-level filtering is applied.
+        const citizensMatching = [];
+
+        // Add heads that match filters
+        (families || []).forEach((fam) => {
+          const head = fam.head || {};
+          const headRaw = {
+            first_name: head.fullName?.split(" ")[0] || "",
+            last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
+            id_number: head.documentId,
+            phone_number: head.phone,
+            house_number: head.address,
+            gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
+            birth_date: head.birthDate,
+            is_pregnant: head.is_pregnant,
+            is_lactating: head.is_lactating,
+            is_disabled: head.is_disabled,
+          };
+          if (matchesDemographicFilters(headRaw, query)) {
+            citizensMatching.push({
+              id: fam.id,
+              id_number: head.documentId,
+              first_name: head.fullName?.split(" ")[0] || "",
+              last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
+              phone_number: head.phone,
+              house_number: head.address,
+              gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
+              birth_date: head.birthDate,
+              is_pregnant: head.is_pregnant,
+              is_lactating: head.is_lactating,
+              is_disabled: head.is_disabled,
+            });
+          }
+
+          // Add members that match filters
+          const members = Array.isArray(fam.members) ? fam.members : [];
+          members.forEach((member) => {
+            const memberRaw = toRawFromMember(member);
+            if (matchesDemographicFilters(memberRaw, query)) {
+              citizensMatching.push({
+                id: member.id,
+                id_number: member.documentId,
+                first_name: member.fullName?.split(" ")[0] || "",
+                last_name: member.fullName?.split(" ").slice(1).join(" ") || "",
+                phone_number: member.phone,
+                house_number: head.address, // Members share head's address
+                gender: member.gender === "Masculino" ? "M" : member.gender === "Femenino" ? "F" : member.gender,
+                birth_date: member.birthDate,
+                is_pregnant: member.is_pregnant,
+                is_lactating: member.is_lactating,
+                is_disabled: member.is_disabled,
+              });
+            }
+          });
+        });
+
         if (exportActionType === "pdf") {
           await exportToPDFCitizens(citizensMatching, null);
         } else {
