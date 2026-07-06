@@ -57,6 +57,26 @@ export function validateBirthDate(value) {
   return "";
 }
 
+export function validateBirthDateForHead(value) {
+  const v = normalizeText(value);
+  if (!v) return "Este campo es requerido";
+
+  const date = new Date(v);
+  if (isNaN(date.getTime())) return "Fecha inválida";
+
+  const now = new Date();
+  if (date.getTime() > now.getTime()) return "No puede ser futura";
+  if (date.getFullYear() < 1900) return "Fecha inválida";
+
+  const age = now.getFullYear() - date.getFullYear();
+  const monthDiff = now.getMonth() - date.getMonth();
+ const ageInYears = monthDiff < 0 || (monthDiff === 0 && now.getDate() < date.getDate()) ? age - 1 : age;
+  
+  if (ageInYears < 18) return "El jefe de familia debe ser mayor de 18 años";
+
+  return "";
+}
+
 export function validateAddress(value) {
   const v = normalizeText(value);
   if (!v) return "Este campo es requerido";

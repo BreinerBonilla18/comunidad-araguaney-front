@@ -19,7 +19,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs from "dayjs";
 import {
   normalizeText,
-  validateBirthDate,
+  validateBirthDateForHead,
   validateFullName,
   validateAddress,
 } from "../../../../utils/functions";
@@ -37,7 +37,7 @@ function FamilyHeadManagement({
   const genderError = !normalizeText(headForm.gender)
     ? "Este campo es requerido"
     : "";
-  const birthDateError = validateBirthDate(headForm.birthDate);
+  const birthDateError = validateBirthDateForHead(headForm.birthDate);
   const addressError = validateAddress(headForm.address);
   const nationalityError = !headForm.nationality ? "Este campo es requerido" : "";
 

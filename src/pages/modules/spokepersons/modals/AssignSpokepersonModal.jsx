@@ -57,17 +57,27 @@ function AssignSpokepersonModal({
     }
    }, [isThereMainSpokesPerson])
 
+  const getAge = (birthDate) => {
+    if (!birthDate) return null;
+    const bd = new Date(birthDate);
+    const diff = Date.now() - bd.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+  };
+
   const filteredCitizens = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
-    if (!q) return citizens;
+    
+    return citizens.filter((citizen) => {
+      const age = getAge(citizen.birth_date);
+      if (age === null || age < 18) return false;
 
-    return citizens.filter((citizen) =>
-      [citizen.first_name, citizen.last_name, citizen.id_number].some((val) =>
+      if (!q) return true;
+      return [citizen.first_name, citizen.last_name, citizen.id_number].some((val) =>
         normalizeText(val || "")
           .toLowerCase()
           .includes(q),
-      ),
-    );
+      );
+    });
   }, [citizens, query]);
 
   const paginatedCitizens = useMemo(() => {
