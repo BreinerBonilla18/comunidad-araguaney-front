@@ -73,14 +73,19 @@ function ProjectManagement({
           <Box sx={{ display: 'flex', gap: 2 }}>
             <TextField
               label="Costo Estimado"
+              type="number"
               value={projectForm.estimated_cost}
-              onChange={(e) =>
-                setProjectForm((p) => ({ ...p, estimated_cost: e.target.value }))
-              }
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+                  setProjectForm((p) => ({ ...p, estimated_cost: value }));
+                }
+              }}
               error={!!costError}
               helperText={costError || ""}
               fullWidth
               required
+              inputProps={{ min: 0, step: "0.01" }}
             />
             <DatePicker
               label="Fecha de Inicio"
@@ -91,6 +96,7 @@ function ProjectManagement({
                   start_date: newValue ? newValue.format("YYYY-MM-DD") : "",
                 }))
               }
+              disabled={editingProject}
               slotProps={{
                 textField: {
                   fullWidth: true,

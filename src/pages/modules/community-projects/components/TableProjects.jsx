@@ -89,6 +89,7 @@ function TableProjects({
                   size="small"
                   aria-label="Editar"
                   onClick={() => handleOpenModal(project)}
+                  disabled={project.status === "completed"}
                 >
                   <FaEdit />
                 </IconButton>
@@ -96,6 +97,7 @@ function TableProjects({
                   size="small" 
                   aria-label="Eliminar"
                   onClick={() => onDeleteProject(project)}
+                  disabled={project.status === "completed"}
                 >
                   <FaRegTrashAlt />
                 </IconButton>

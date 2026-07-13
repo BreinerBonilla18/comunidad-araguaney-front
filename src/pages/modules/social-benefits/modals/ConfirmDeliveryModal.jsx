@@ -27,33 +27,42 @@ function ConfirmDeliveryModal({ open, onClose, onConfirm, benefitType, beneficia
   };
 
   const handleQuantityChange = (e) => {
-    const value = parseInt(e.target.value);
+    const value = e.target.value;
     
-    if (value < 0) {
+    if (value === "") {
+      setQuantity("");
+      setQuantityError("");
+      return;
+    }
+    
+    const numValue = parseInt(value);
+    
+    if (isNaN(numValue)) {
+      setQuantityError("Debe ser un número válido");
+      return;
+    }
+    
+    if (numValue < 0) {
       setQuantityError("La cantidad no puede ser menor a 0");
       return;
     }
     
-    if (value > 10) {
+    if (numValue > 10) {
       setQuantityError("La cantidad no puede ser mayor a 10");
       return;
     }
     
     setQuantityError("");
-    const newQuantity = value || 1;
-    setQuantity(newQuantity);
+    setQuantity(numValue);
     
-    // Adjust cylinders array based on quantity
-    if (newQuantity > cylinders.length) {
-      // Add new cylinders
+    if (numValue > cylinders.length) {
       const newCylinders = [...cylinders];
-      for (let i = cylinders.length; i < newQuantity; i++) {
+      for (let i = cylinders.length; i < numValue; i++) {
         newCylinders.push({ cylinder_code: "", weight_kg: "" });
       }
       setCylinders(newCylinders);
-    } else if (newQuantity < cylinders.length) {
-      // Remove excess cylinders
-      setCylinders(cylinders.slice(0, newQuantity));
+    } else if (numValue < cylinders.length) {
+      setCylinders(cylinders.slice(0, numValue));
     }
   };
 

@@ -12,6 +12,7 @@ import {
 } from "@mui/material";
 import { useState, useCallback } from "react";
 import { getSpokepersons } from "../../../../api/spokepersons";
+import { createDocument } from "../../../../api/documents";
 import { exportResidencyCertificate, exportGoodConductCertificate } from "../../../../utils/exportUtils";
 import araguaneyLogo from "../../../../assets/araguaney-img.png";
 import ResidenceCertificateFormModal from "../modals/ResidenceCertificateFormModal";
@@ -76,13 +77,37 @@ function CertificateGenerator({ selectedResident }) {
 
   const handleExportResidency = async (customData) => {
     const dataToExport = customData || formData;
-    await exportResidencyCertificate(dataToExport, spokepersons, araguaneyLogo);
+    const pdfBlob = await exportResidencyCertificate(dataToExport, spokepersons, araguaneyLogo);
+    
+    try {
+      const formDataDoc = new FormData();
+      formDataDoc.append("title", `Constancia de Residencia - ${dataToExport.fullName}`);
+      formDataDoc.append("document_date", dataToExport.issueDate);
+      formDataDoc.append("file", pdfBlob, `Constancia_Residencia_${dataToExport.fullName.replace(/\s+/g, '_')}.pdf`);
+      
+      await createDocument(formDataDoc);
+    } catch (error) {
+      console.error("Error al guardar el certificado en documentos:", error);
+    }
+    
     setOpenResidencyModal(false);
   };
 
   const handleExportGoodConduct = async (customData) => {
     const dataToExport = customData || formData;
-    await exportGoodConductCertificate(dataToExport, spokepersons, araguaneyLogo);
+    const pdfBlob = await exportGoodConductCertificate(dataToExport, spokepersons, araguaneyLogo);
+    
+    try {
+      const formDataDoc = new FormData();
+      formDataDoc.append("title", `Constancia de Buena Conducta - ${dataToExport.fullName}`);
+      formDataDoc.append("document_date", dataToExport.issueDate);
+      formDataDoc.append("file", pdfBlob, `Constancia_Buena_Conducta_${dataToExport.fullName.replace(/\s+/g, '_')}.pdf`);
+      
+      await createDocument(formDataDoc);
+    } catch (error) {
+      console.error("Error al guardar el certificado en documentos:", error);
+    }
+    
     setOpenGoodConductModal(false);
   };
 

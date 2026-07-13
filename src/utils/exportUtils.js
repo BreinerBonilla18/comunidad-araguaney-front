@@ -483,6 +483,8 @@ export const exportResidencyCertificate = async (data, spokepersons, logoUrl) =>
   });
 
   doc.save(`Constancia_Residencia_${data.fullName.replace(/\s+/g, '_')}.pdf`);
+  
+  return doc.output('blob');
 };
 
 export const exportGoodConductCertificate = async (data, spokepersons, logoUrl) => {
@@ -577,4 +579,6 @@ export const exportGoodConductCertificate = async (data, spokepersons, logoUrl) 
   });
 
   doc.save(`Constancia_Buena_Conducta_${data.fullName.replace(/\s+/g, '_')}.pdf`);
+  
+  return doc.output('blob');
 };
