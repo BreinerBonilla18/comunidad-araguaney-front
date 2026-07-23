@@ -73,14 +73,14 @@ function Dashboard() {
         value: dashboardData.active_projects,
         icon: <FaProjectDiagram size={24} />,
         color: "#f59e0b",
-        link: "/proyectos",
+        link: "/projects",
       },
       {
         title: "Documentos Almacenados",
         value: dashboardData.stored_documents,
         icon: <FaFileAlt size={24} />,
         color: "#10b981",
-        link: "/documentos",
+        link: "/documents",
       },
       {
         title: "Saldo Comunitario",
@@ -89,7 +89,7 @@ function Dashboard() {
         })}`,
         icon: <FaWallet size={24} />,
         color: "#8b5cf6",
-        link: "/finanzas",
+        link: "/finances",
       },
     ],
     [dashboardData],
@@ -187,7 +187,7 @@ function Dashboard() {
             </Typography>
             <Button
               component={Link}
-              to="/proyectos"
+              to="/projects"
               size="small"
               sx={{ textTransform: "none" }}
             >
