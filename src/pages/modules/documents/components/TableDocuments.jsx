@@ -20,6 +20,7 @@ import {
   FaRegTrashAlt,
 } from "react-icons/fa";
 import { formatDate } from "../../../../utils/functions";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function TableDocuments({
   filteredDocuments,
@@ -31,6 +32,7 @@ function TableDocuments({
   handleOpenModal,
   onDeleteDocument,
 }) {
+  const { isAdmin } = useAuth();
   const getFileIcon = (type) => {
     switch (type?.toLowerCase()) {
       case "pdf":
@@ -111,19 +113,23 @@ function TableDocuments({
                     <FaDownload />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Editar">
-                  <IconButton size="small" onClick={() => handleOpenModal(doc)}>
-                    <FaEdit />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Eliminar">
-                  <IconButton
-                    size="small"
-                    onClick={() => onDeleteDocument(doc)}
-                  >
-                    <FaRegTrashAlt />
-                  </IconButton>
-                </Tooltip>
+                {isAdmin && (
+                  <>
+                    <Tooltip title="Editar">
+                      <IconButton size="small" onClick={() => handleOpenModal(doc)}>
+                        <FaEdit />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar">
+                      <IconButton
+                        size="small"
+                        onClick={() => onDeleteDocument(doc)}
+                      >
+                        <FaRegTrashAlt />
+                      </IconButton>
+                    </Tooltip>
+                  </>
+                )}
               </TableCell>
             </TableRow>
           ))}

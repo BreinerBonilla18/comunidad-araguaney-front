@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useAuth } from "../../../hooks/useAuth";
 /* ----------------- icons ----------------- */
 import {
   FaProjectDiagram,
@@ -46,6 +47,7 @@ const emptyProjectForm = {
 };
 
 function Projects() {
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
@@ -246,13 +248,15 @@ function Projects() {
             >
               Exportar PDF
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<FaPlus />}
-              onClick={() => handleOpenModal()}
-            >
-              Nuevo Proyecto
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="contained"
+                startIcon={<FaPlus />}
+                onClick={() => handleOpenModal()}
+              >
+                Nuevo Proyecto
+              </Button>
+            )}
           </Box>
         </Box>
 

@@ -11,6 +11,7 @@ import {
 } from "@mui/material";
 import { FaEdit, FaRegTrashAlt } from "react-icons/fa";
 import { formatDate } from "../../../../utils/functions";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function TableProjects({ 
   filteredProjects, 
@@ -22,6 +23,7 @@ function TableProjects({
   handleOpenModal,
   onDeleteProject 
 }) {
+  const { isAdmin } = useAuth();
   const getStatusColor = (status) => {
     switch (status) {
       case "completed":
@@ -85,22 +87,26 @@ function TableProjects({
               <TableCell>{project.estimated_cost}</TableCell>
               <TableCell>{formatDate(project.start_date)}</TableCell>
               <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                <IconButton
-                  size="small"
-                  aria-label="Editar"
-                  onClick={() => handleOpenModal(project)}
-                  disabled={project.status === "completed"}
-                >
-                  <FaEdit />
-                </IconButton>
-                <IconButton 
-                  size="small" 
-                  aria-label="Eliminar"
-                  onClick={() => onDeleteProject(project)}
-                  disabled={project.status === "completed"}
-                >
-                  <FaRegTrashAlt />
-                </IconButton>
+                {isAdmin && (
+                  <>
+                    <IconButton
+                      size="small"
+                      aria-label="Editar"
+                      onClick={() => handleOpenModal(project)}
+                      disabled={project.status === "completed"}
+                    >
+                      <FaEdit />
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      aria-label="Eliminar"
+                      onClick={() => onDeleteProject(project)}
+                      disabled={project.status === "completed"}
+                    >
+                      <FaRegTrashAlt />
+                    </IconButton>
+                  </>
+                )}
               </TableCell>
             </TableRow>
           ))}

@@ -9,6 +9,7 @@ import {
   TableRow
 } from "@mui/material";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function TableBeneficiaries({
   filteredBeneficiaries,
@@ -16,6 +17,7 @@ function TableBeneficiaries({
   isJornadaActive,
   benefitType,
 }) {
+  const { isAdmin } = useAuth();
   const isGas = benefitType === "Gas Comunal";
 
   return (
@@ -76,7 +78,7 @@ function TableBeneficiaries({
                   <Checkbox
                     checked={b.status === "delivered"}
                     onChange={() => handleToggleStatus(b.id, b.status, b.name)}
-                    disabled={!isJornadaActive}
+                    disabled={!isJornadaActive || !isAdmin}
                   />
                 }
                 label={

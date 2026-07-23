@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FaEdit, FaRegTrashAlt } from "react-icons/fa";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function TableFamilyHead({
   filteredFamilies,
@@ -24,6 +25,7 @@ function TableFamilyHead({
   openEditHead,
   openDeleteHead,
 }) {
+  const { isAdmin } = useAuth();
   return (
     <Paper className="p-3" variant="outlined">
       <Box className="flex items-center justify-between gap-2 mb-7">
@@ -58,20 +60,24 @@ function TableFamilyHead({
                 <TableCell>{family?.head?.fullName ?? ""}</TableCell>
                 <TableCell>{family?.head?.documentId ?? ""}</TableCell>
                 <TableCell align="right" onClick={(e) => e.stopPropagation()}>
-                  <IconButton
-                    size="small"
-                    aria-label="Editar"
-                    onClick={() => openEditHead(family)}
-                  >
-                    <FaEdit />
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    aria-label="Eliminar"
-                    onClick={() => openDeleteHead(family)}
-                  >
-                    <FaRegTrashAlt />
-                  </IconButton>
+                  {isAdmin && (
+                    <>
+                      <IconButton
+                        size="small"
+                        aria-label="Editar"
+                        onClick={() => openEditHead(family)}
+                      >
+                        <FaEdit />
+                      </IconButton>
+                      <IconButton
+                        size="small"
+                        aria-label="Eliminar"
+                        onClick={() => openDeleteHead(family)}
+                      >
+                        <FaRegTrashAlt />
+                      </IconButton>
+                    </>
+                  )}
                 </TableCell>
               </TableRow>
             );

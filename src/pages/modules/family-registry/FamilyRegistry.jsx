@@ -16,8 +16,23 @@ import {
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useMemo, useState, useEffect, useCallback } from "react";
+import { useAuth } from "../../../hooks/useAuth";
 /* ----------------- icons ----------------- */
-import { FaFileCsv, FaFilePdf, FaPlus, FaUsers, FaChevronDown, FaChevronUp, FaHome, FaHeartbeat, FaBaby, FaMale, FaFemale, FaWheelchair, FaChild } from "react-icons/fa";
+import {
+  FaFileCsv,
+  FaFilePdf,
+  FaPlus,
+  FaUsers,
+  FaChevronDown,
+  FaChevronUp,
+  FaHome,
+  FaHeartbeat,
+  FaBaby,
+  FaMale,
+  FaFemale,
+  FaWheelchair,
+  FaChild,
+} from "react-icons/fa";
 import { MdElderly } from "react-icons/md";
 /* ----------------- API ----------------- */
 import {
@@ -72,6 +87,7 @@ const emptyMemberForm = {
 };
 
 function FamilyRegistry() {
+  const { isAdmin } = useAuth();
   const [families, setFamilies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedFamilyId, setSelectedFamilyId] = useState(null);
@@ -92,7 +108,7 @@ function FamilyRegistry() {
   // helper to toggle age groups
   const handleAgeGroupToggle = (group) => {
     setAgeGroupsFilter((prev) =>
-      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group]
+      prev.includes(group) ? prev.filter((g) => g !== group) : [...prev, group],
     );
   };
   const [familyPage, setFamilyPage] = useState(0);
@@ -231,7 +247,6 @@ function FamilyRegistry() {
     return result;
   }, [families]);
 
-  
   const toRawFromHead = (head) => {
     return {
       first_name: head?.fullName?.split(" ")[0] || "",
@@ -239,7 +254,12 @@ function FamilyRegistry() {
       id_number: head?.documentId,
       phone_number: head?.phone,
       house_number: head?.address,
-      gender: head?.gender === "Masculino" ? "M" : head?.gender === "Femenino" ? "F" : head?.gender,
+      gender:
+        head?.gender === "Masculino"
+          ? "M"
+          : head?.gender === "Femenino"
+            ? "F"
+            : head?.gender,
       birth_date: head?.birthDate,
       is_pregnant: head?.is_pregnant,
       is_lactating: head?.is_lactating,
@@ -254,7 +274,12 @@ function FamilyRegistry() {
       id_number: m?.documentId,
       phone_number: m?.phone,
       house_number: m?.house_number,
-      gender: m?.gender === "Masculino" ? "M" : m?.gender === "Femenino" ? "F" : m?.gender,
+      gender:
+        m?.gender === "Masculino"
+          ? "M"
+          : m?.gender === "Femenino"
+            ? "F"
+            : m?.gender,
       birth_date: m?.birthDate || m?.birth_date,
       is_pregnant: m?.is_pregnant,
       is_lactating: m?.is_lactating,
@@ -262,28 +287,7 @@ function FamilyRegistry() {
     };
   };
 
-  const normalizeCitizenForFiltering = (citizen) => {
-    return {
-      first_name: citizen?.first_name || citizen?.firstName || (citizen?.fullName || "").split(" ")[0] || "",
-      last_name: citizen?.last_name || citizen?.lastName || (citizen?.fullName || "").split(" ").slice(1).join(" ") || "",
-      id_number: citizen?.id_number ?? citizen?.documentId ?? citizen?.idNumber ?? "",
-      phone_number: citizen?.phone_number ?? citizen?.phone ?? "",
-      house_number: citizen?.house_number ?? citizen?.houseNumber ?? citizen?.address ?? "",
-      gender:
-        citizen?.gender === "M"
-          ? "M"
-          : citizen?.gender === "F"
-          ? "F"
-          : citizen?.gender,
-      birth_date: citizen?.birth_date ?? citizen?.birthDate ?? null,
-      is_pregnant:
-        citizen?.is_pregnant ?? citizen?.isPregnant ?? citizen?.embarazada ?? citizen?.delivery_status,
-      is_lactating: citizen?.is_lactating ?? citizen?.isLactating ?? citizen?.lactating,
-      is_disabled: citizen?.is_disabled ?? citizen?.isDisabled ?? citizen?.disabled,
-    };
-  };
-
-      const getAge = (birthDate) => {
+  const getAge = (birthDate) => {
     if (!birthDate) return null;
     const bd = new Date(birthDate);
     const diff = Date.now() - bd.getTime();
@@ -301,27 +305,42 @@ function FamilyRegistry() {
   const parseBooleanFlag = (obj, keys) => {
     for (const k of keys) {
       const v = obj?.[k];
-      if (v === true || v === "true" || v === 1 || v === "1" || v === "si" || v === "Sí" || v === "S") return true;
+      if (
+        v === true ||
+        v === "true" ||
+        v === 1 ||
+        v === "1" ||
+        v === "si" ||
+        v === "Sí" ||
+        v === "S"
+      )
+        return true;
       if (v === false || v === "false" || v === 0 || v === "0") return false;
     }
     return false;
   };
 
   const matchesDemographicFilters = (rawCitizen, textQuery = "") => {
-    const fullName = `${rawCitizen.first_name || ""} ${rawCitizen.last_name || ""}`.toLowerCase();
+    const fullName =
+      `${rawCitizen.first_name || ""} ${rawCitizen.last_name || ""}`.toLowerCase();
     const q = textQuery?.trim().toLowerCase() || "";
 
     // Text match (if provided)
     if (q) {
       const idnum = (rawCitizen.id_number || "").toString().toLowerCase();
       const phone = (rawCitizen.phone_number || "").toString().toLowerCase();
-      if (!(fullName.includes(q) || idnum.includes(q) || phone.includes(q))) return false;
+      if (!(fullName.includes(q) || idnum.includes(q) || phone.includes(q)))
+        return false;
     }
 
     // Gender
     if (genderFilter && genderFilter !== "all") {
       const g = (rawCitizen.gender || "").toString();
-      if (g !== genderFilter && (g !== (genderFilter === "Masculino" ? "M" : "F"))) return false;
+      if (
+        g !== genderFilter &&
+        g !== (genderFilter === "Masculino" ? "M" : "F")
+      )
+        return false;
     }
 
     // Age groups
@@ -333,18 +352,35 @@ function FamilyRegistry() {
 
     // Flags
     if (pregnantFilter) {
-      if (!parseBooleanFlag(rawCitizen, ["is_pregnant", "isPregnant", "embarazada", "delivery_status"])) return false;
+      if (
+        !parseBooleanFlag(rawCitizen, [
+          "is_pregnant",
+          "isPregnant",
+          "embarazada",
+          "delivery_status",
+        ])
+      )
+        return false;
     }
     if (lactatingFilter) {
-      if (!parseBooleanFlag(rawCitizen, ["is_lactating", "isLactating", "lactating"])) return false;
+      if (
+        !parseBooleanFlag(rawCitizen, [
+          "is_lactating",
+          "isLactating",
+          "lactating",
+        ])
+      )
+        return false;
     }
     if (disabledFilter) {
-      if (!parseBooleanFlag(rawCitizen, ["is_disabled", "isDisabled", "disabled"])) return false;
+      if (
+        !parseBooleanFlag(rawCitizen, ["is_disabled", "isDisabled", "disabled"])
+      )
+        return false;
     }
 
     return true;
   };
-
 
   const filteredAllMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
@@ -373,7 +409,18 @@ function FamilyRegistry() {
         memberPage * memberRowsPerPage + memberRowsPerPage,
       );
     }
-  }, [allMembers, selectedFamily, query, memberPage, memberRowsPerPage, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
+  }, [
+    allMembers,
+    selectedFamily,
+    query,
+    memberPage,
+    memberRowsPerPage,
+    genderFilter,
+    ageGroupsFilter,
+    pregnantFilter,
+    lactatingFilter,
+    disabledFilter,
+  ]);
 
   const totalFilteredFamilies = useMemo(() => {
     // Count families that match demographic filters (head or any member)
@@ -383,38 +430,73 @@ function FamilyRegistry() {
       if (matchesDemographicFilters(headRaw, query)) return true;
 
       const members = Array.isArray(f?.members) ? f.members : [];
-      const anyMemberMatches = members.some((m) => matchesDemographicFilters(toRawFromMember(m), query));
+      const anyMemberMatches = members.some((m) =>
+        matchesDemographicFilters(toRawFromMember(m), query),
+      );
       return anyMemberMatches;
     }).length;
 
     return count;
-  }, [families, query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
+  }, [
+    families,
+    query,
+    genderFilter,
+    ageGroupsFilter,
+    pregnantFilter,
+    lactatingFilter,
+    disabledFilter,
+  ]);
 
   const totalFilteredMembers = useMemo(() => {
     const q = normalizeText(query).toLowerCase();
     const isSearching = !!q;
 
     if (isSearching) {
-      return allMembers.filter((member) => matchesDemographicFilters(toRawFromMember(member), query)).length;
+      return allMembers.filter((member) =>
+        matchesDemographicFilters(toRawFromMember(member), query),
+      ).length;
     } else {
       const members = selectedFamily?.members ?? [];
-      return members.filter((m) => matchesDemographicFilters(toRawFromMember(m), "")).length;
+      return members.filter((m) =>
+        matchesDemographicFilters(toRawFromMember(m), ""),
+      ).length;
     }
-  }, [allMembers, selectedFamily, query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
+  }, [
+    allMembers,
+    selectedFamily,
+    query,
+    genderFilter,
+    ageGroupsFilter,
+    pregnantFilter,
+    lactatingFilter,
+    disabledFilter,
+  ]);
 
   const filteredFamilies = useMemo(() => {
     const filtered = (families || []).filter((f) => {
       const head = f?.head ?? {};
       if (matchesDemographicFilters(toRawFromHead(head), query)) return true;
       const members = Array.isArray(f?.members) ? f.members : [];
-      return members.some((m) => matchesDemographicFilters(toRawFromMember(m), query));
+      return members.some((m) =>
+        matchesDemographicFilters(toRawFromMember(m), query),
+      );
     });
 
     return filtered.slice(
       familyPage * familyRowsPerPage,
       familyPage * familyRowsPerPage + familyRowsPerPage,
     );
-  }, [families, query, familyPage, familyRowsPerPage, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
+  }, [
+    families,
+    query,
+    familyPage,
+    familyRowsPerPage,
+    genderFilter,
+    ageGroupsFilter,
+    pregnantFilter,
+    lactatingFilter,
+    disabledFilter,
+  ]);
 
   const handleFamilyPageChange = (event, newPage) => {
     setFamilyPage(newPage);
@@ -671,7 +753,12 @@ function FamilyRegistry() {
             id_number: head.documentId,
             phone_number: head.phone,
             house_number: head.address,
-            gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
+            gender:
+              head.gender === "Masculino"
+                ? "M"
+                : head.gender === "Femenino"
+                  ? "F"
+                  : head.gender,
             birth_date: head.birthDate,
             is_pregnant: head.is_pregnant,
             is_lactating: head.is_lactating,
@@ -685,7 +772,12 @@ function FamilyRegistry() {
               last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
               phone_number: head.phone,
               house_number: head.address,
-              gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
+              gender:
+                head.gender === "Masculino"
+                  ? "M"
+                  : head.gender === "Femenino"
+                    ? "F"
+                    : head.gender,
               birth_date: head.birthDate,
               is_pregnant: head.is_pregnant,
               is_lactating: head.is_lactating,
@@ -705,7 +797,12 @@ function FamilyRegistry() {
                 last_name: member.fullName?.split(" ").slice(1).join(" ") || "",
                 phone_number: member.phone,
                 house_number: head.address, // Members share head's address
-                gender: member.gender === "Masculino" ? "M" : member.gender === "Femenino" ? "F" : member.gender,
+                gender:
+                  member.gender === "Masculino"
+                    ? "M"
+                    : member.gender === "Femenino"
+                      ? "F"
+                      : member.gender,
                 birth_date: member.birthDate,
                 is_pregnant: member.is_pregnant,
                 is_lactating: member.is_lactating,
@@ -722,36 +819,51 @@ function FamilyRegistry() {
         }
       } else {
         // Export heads: apply strict head-only filtering for export
-        const headsToExport = (families || []).filter((fam) => {
-          const head = fam.head || {};
-          return matchesDemographicFilters({
-            first_name: head.fullName?.split(" ")[0] || "",
-            last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
-            id_number: head.documentId,
-            phone_number: head.phone,
-            house_number: head.address,
-            gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
-            birth_date: head.birthDate,
-            is_pregnant: head.is_pregnant,
-            is_lactating: head.is_lactating,
-            is_disabled: head.is_disabled,
-          }, query);
-        }).map((f) => {
-          const head = f.head || {};
-          return {
-            id: f.id,
-            id_number: head.documentId,
-            first_name: head.fullName?.split(" ")[0] || "",
-            last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
-            phone_number: head.phone,
-            house_number: head.address,
-            gender: head.gender === "Masculino" ? "M" : head.gender === "Femenino" ? "F" : head.gender,
-            birth_date: head.birthDate,
-            is_pregnant: head.is_pregnant,
-            is_lactating: head.is_lactating,
-            is_disabled: head.is_disabled,
-          };
-        });
+        const headsToExport = (families || [])
+          .filter((fam) => {
+            const head = fam.head || {};
+            return matchesDemographicFilters(
+              {
+                first_name: head.fullName?.split(" ")[0] || "",
+                last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
+                id_number: head.documentId,
+                phone_number: head.phone,
+                house_number: head.address,
+                gender:
+                  head.gender === "Masculino"
+                    ? "M"
+                    : head.gender === "Femenino"
+                      ? "F"
+                      : head.gender,
+                birth_date: head.birthDate,
+                is_pregnant: head.is_pregnant,
+                is_lactating: head.is_lactating,
+                is_disabled: head.is_disabled,
+              },
+              query,
+            );
+          })
+          .map((f) => {
+            const head = f.head || {};
+            return {
+              id: f.id,
+              id_number: head.documentId,
+              first_name: head.fullName?.split(" ")[0] || "",
+              last_name: head.fullName?.split(" ").slice(1).join(" ") || "",
+              phone_number: head.phone,
+              house_number: head.address,
+              gender:
+                head.gender === "Masculino"
+                  ? "M"
+                  : head.gender === "Femenino"
+                    ? "F"
+                    : head.gender,
+              birth_date: head.birthDate,
+              is_pregnant: head.is_pregnant,
+              is_lactating: head.is_lactating,
+              is_disabled: head.is_disabled,
+            };
+          });
 
         if (exportActionType === "pdf") {
           await exportToPDFCitizens(headsToExport, null);
@@ -759,10 +871,18 @@ function FamilyRegistry() {
           exportToExcelCitizens(headsToExport);
         }
       }
-      setSuccessModal({ open: true, title: "Exportación", message: "Exportación completada." });
+      setSuccessModal({
+        open: true,
+        title: "Exportación",
+        message: "Exportación completada.",
+      });
     } catch (error) {
       console.error("Error during export:", error);
-      setErrorModal({ open: true, title: "Exportación", message: "Error al exportar." });
+      setErrorModal({
+        open: true,
+        title: "Exportación",
+        message: "Error al exportar.",
+      });
     }
   };
 
@@ -787,13 +907,28 @@ function FamilyRegistry() {
   useEffect(() => {
     setFamilyPage(0);
     setMemberPage(0);
-  }, [query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
+  }, [
+    query,
+    genderFilter,
+    ageGroupsFilter,
+    pregnantFilter,
+    lactatingFilter,
+    disabledFilter,
+  ]);
 
   useEffect(() => {
     if (!query) {
       setMemberPage(0);
     }
-  }, [selectedFamily, query, genderFilter, ageGroupsFilter, pregnantFilter, lactatingFilter, disabledFilter]);
+  }, [
+    selectedFamily,
+    query,
+    genderFilter,
+    ageGroupsFilter,
+    pregnantFilter,
+    lactatingFilter,
+    disabledFilter,
+  ]);
 
   return (
     <Box className="w-full">
@@ -824,13 +959,15 @@ function FamilyRegistry() {
               Exportar PDF
             </Button>
 
-            <Button
-              variant="contained"
-              startIcon={<FaPlus />}
-              onClick={openCreateHead}
-            >
-              Nuevo jefe
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="contained"
+                startIcon={<FaPlus />}
+                onClick={openCreateHead}
+              >
+                Nuevo jefe
+              </Button>
+            )}
           </Box>
         </Box>
         <Paper className="p-4">
@@ -851,7 +988,10 @@ function FamilyRegistry() {
                 }}
               >
                 <Box className="flex items-center justify-between mb-4">
-                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: COLORS.text.secondary }}
+                  >
                     Población total
                   </Typography>
                   <Box
@@ -861,7 +1001,10 @@ function FamilyRegistry() {
                     <FaUsers size={22} />
                   </Box>
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                >
                   {statsLoading ? "..." : (stats?.poblacion_total ?? "0")}
                 </Typography>
               </Paper>
@@ -876,7 +1019,10 @@ function FamilyRegistry() {
                 }}
               >
                 <Box className="flex items-center justify-between mb-4">
-                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: COLORS.text.secondary }}
+                  >
                     Cantidad de familias
                   </Typography>
                   <Box
@@ -886,7 +1032,10 @@ function FamilyRegistry() {
                     <FaHome size={22} />
                   </Box>
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                >
                   {statsLoading ? "..." : (stats?.cantidad_familias ?? "0")}
                 </Typography>
               </Paper>
@@ -901,7 +1050,10 @@ function FamilyRegistry() {
                 }}
               >
                 <Box className="flex items-center justify-between mb-4">
-                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: COLORS.text.secondary }}
+                  >
                     Embarazadas
                   </Typography>
                   <Box
@@ -911,7 +1063,10 @@ function FamilyRegistry() {
                     <FaHeartbeat size={22} />
                   </Box>
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                >
                   {statsLoading ? "..." : (stats?.embarazadas ?? "0")}
                 </Typography>
               </Paper>
@@ -926,7 +1081,10 @@ function FamilyRegistry() {
                 }}
               >
                 <Box className="flex items-center justify-between mb-4">
-                  <Typography variant="subtitle2" sx={{ color: COLORS.text.secondary }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ color: COLORS.text.secondary }}
+                  >
                     Lactantes
                   </Typography>
                   <Box
@@ -936,10 +1094,13 @@ function FamilyRegistry() {
                     <FaBaby size={22} />
                   </Box>
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: "bold", color: COLORS.text.primary }}>
+                <Typography
+                  variant="h4"
+                  sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                >
                   {statsLoading ? "..." : (stats?.lactantes ?? "0")}
                 </Typography>
-                </Paper>
+              </Paper>
             </Box>
 
             <Box className="flex justify-end">
@@ -957,136 +1118,270 @@ function FamilyRegistry() {
               <Box className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Niños (Masculino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Niños (Masculino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#3b82f615", color: "#3b82f6" }}
+                    >
                       <FaChild size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.niños?.masculino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading ? "..." : (stats?.niños?.masculino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Niñas (Femenino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Niñas (Femenino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#ec489915", color: "#ec4899" }}
+                    >
                       <FaChild size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.niños?.femenino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading ? "..." : (stats?.niños?.femenino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adolescentes (Masculino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Adolescentes (Masculino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#3b82f615", color: "#3b82f6" }}
+                    >
                       <FaMale size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.adolescentes?.masculino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading
+                      ? "..."
+                      : (stats?.adolescentes?.masculino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adolescentes (Femenino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#ec489915', color: '#ec4899' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Adolescentes (Femenino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#ec489915", color: "#ec4899" }}
+                    >
                       <FaFemale size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.adolescentes?.femenino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading
+                      ? "..."
+                      : (stats?.adolescentes?.femenino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos (Masculino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Adultos (Masculino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#3b82f615", color: "#3b82f6" }}
+                    >
                       <FaMale size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.adultos?.masculino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading ? "..." : (stats?.adultos?.masculino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos (Femenino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#f472b615', color: '#be185d' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Adultos (Femenino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#f472b615", color: "#be185d" }}
+                    >
                       <FaFemale size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.adultos?.femenino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading ? "..." : (stats?.adultos?.femenino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos mayores (Masculino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#3b82f615', color: '#3b82f6' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Adultos mayores (Masculino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#3b82f615", color: "#3b82f6" }}
+                    >
                       <MdElderly size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.adultos_mayores?.masculino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading
+                      ? "..."
+                      : (stats?.adultos_mayores?.masculino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Adultos mayores (Femenino)</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#f472b615', color: '#be185d' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Adultos mayores (Femenino)
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#f472b615", color: "#be185d" }}
+                    >
                       <MdElderly size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.adultos_mayores?.femenino ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading
+                      ? "..."
+                      : (stats?.adultos_mayores?.femenino ?? "0")}
                   </Typography>
                 </Paper>
 
                 <Paper
                   className="p-4 flex flex-col justify-between hover:shadow-lg transition-shadow duration-300"
-                  sx={{ backgroundColor: COLORS.surface.card, border: `1px solid ${COLORS.surface.border}`, borderRadius: '1rem' }}
+                  sx={{
+                    backgroundColor: COLORS.surface.card,
+                    border: `1px solid ${COLORS.surface.border}`,
+                    borderRadius: "1rem",
+                  }}
                 >
                   <Box className="flex items-center justify-between mb-3">
-                    <Typography sx={{ color: COLORS.text.secondary, fontSize: 12 }}>Discapacitados</Typography>
-                    <Box className="p-2 rounded-lg flex items-center justify-center" sx={{ backgroundColor: '#0ea5e915', color: '#0369a1' }}>
+                    <Typography
+                      sx={{ color: COLORS.text.secondary, fontSize: 12 }}
+                    >
+                      Discapacitados
+                    </Typography>
+                    <Box
+                      className="p-2 rounded-lg flex items-center justify-center"
+                      sx={{ backgroundColor: "#0ea5e915", color: "#0369a1" }}
+                    >
                       <FaWheelchair size={18} />
                     </Box>
                   </Box>
-                  <Typography variant="h6" sx={{ fontWeight: 'bold', color: COLORS.text.primary }}>
-                    {statsLoading ? '...' : (stats?.discapacitados ?? '0')}
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: "bold", color: COLORS.text.primary }}
+                  >
+                    {statsLoading ? "..." : (stats?.discapacitados ?? "0")}
                   </Typography>
                 </Paper>
               </Box>
@@ -1111,19 +1406,39 @@ function FamilyRegistry() {
 
                   <FormGroup row>
                     <FormControlLabel
-                      control={<Checkbox checked={ageGroupsFilter.includes("children")} onChange={() => handleAgeGroupToggle("children")} />}
+                      control={
+                        <Checkbox
+                          checked={ageGroupsFilter.includes("children")}
+                          onChange={() => handleAgeGroupToggle("children")}
+                        />
+                      }
                       label="Niños"
                     />
                     <FormControlLabel
-                      control={<Checkbox checked={ageGroupsFilter.includes("adolescents")} onChange={() => handleAgeGroupToggle("adolescents")} />}
+                      control={
+                        <Checkbox
+                          checked={ageGroupsFilter.includes("adolescents")}
+                          onChange={() => handleAgeGroupToggle("adolescents")}
+                        />
+                      }
                       label="Adolescentes"
                     />
                     <FormControlLabel
-                      control={<Checkbox checked={ageGroupsFilter.includes("adults")} onChange={() => handleAgeGroupToggle("adults")} />}
+                      control={
+                        <Checkbox
+                          checked={ageGroupsFilter.includes("adults")}
+                          onChange={() => handleAgeGroupToggle("adults")}
+                        />
+                      }
                       label="Adultos"
                     />
                     <FormControlLabel
-                      control={<Checkbox checked={ageGroupsFilter.includes("elders")} onChange={() => handleAgeGroupToggle("elders")} />}
+                      control={
+                        <Checkbox
+                          checked={ageGroupsFilter.includes("elders")}
+                          onChange={() => handleAgeGroupToggle("elders")}
+                        />
+                      }
                       label="Adultos Mayores"
                     />
                   </FormGroup>
@@ -1132,15 +1447,30 @@ function FamilyRegistry() {
                 <Box className="flex items-center gap-3">
                   <FormGroup row>
                     <FormControlLabel
-                      control={<Checkbox checked={pregnantFilter} onChange={(e) => setPregnantFilter(e.target.checked)} />}
+                      control={
+                        <Checkbox
+                          checked={pregnantFilter}
+                          onChange={(e) => setPregnantFilter(e.target.checked)}
+                        />
+                      }
                       label="Embarazadas"
                     />
                     <FormControlLabel
-                      control={<Checkbox checked={lactatingFilter} onChange={(e) => setLactatingFilter(e.target.checked)} />}
+                      control={
+                        <Checkbox
+                          checked={lactatingFilter}
+                          onChange={(e) => setLactatingFilter(e.target.checked)}
+                        />
+                      }
                       label="Lactantes"
                     />
                     <FormControlLabel
-                      control={<Checkbox checked={disabledFilter} onChange={(e) => setDisabledFilter(e.target.checked)} />}
+                      control={
+                        <Checkbox
+                          checked={disabledFilter}
+                          onChange={(e) => setDisabledFilter(e.target.checked)}
+                        />
+                      }
                       label="Discapacitados"
                     />
                   </FormGroup>

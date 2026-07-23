@@ -10,6 +10,7 @@ import {
 /* ----------------- hooks ----------------- */
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { LinearProgress } from "@mui/material";
+import { useAuth } from "../../../hooks/useAuth";
 /* ----------------- icons ----------------- */
 import { FaFileAlt, FaPlus } from "react-icons/fa";
 /* ----------------- utils ----------------- */
@@ -35,6 +36,7 @@ const emptyDocumentForm = {
 };
 
 function Documents() {
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [editingDoc, setEditingDoc] = useState(null);
@@ -214,13 +216,15 @@ function Documents() {
             </Typography>
           </Box>
 
-          <Button
-            variant="contained"
-            startIcon={<FaPlus />}
-            onClick={() => handleOpenModal()}
-          >
-            Nuevo Documento
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="contained"
+              startIcon={<FaPlus />}
+              onClick={() => handleOpenModal()}
+            >
+              Nuevo Documento
+            </Button>
+          )}
         </Box>
 
         <Paper className="p-4">

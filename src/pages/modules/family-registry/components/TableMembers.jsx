@@ -12,6 +12,7 @@ import {
   Typography,
 } from "@mui/material";
 import { FaEdit, FaPlus, FaRegTrashAlt } from "react-icons/fa";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function TableMembers({ 
   selectedFamily, 
@@ -23,9 +24,10 @@ function TableMembers({
   onRowsPerPageChange,
   query,
   openCreateMember, 
-  openEditMember, 
+  openEditMember,
   openDeleteMember 
 }) {
+  const { isAdmin } = useAuth();
   // Determine if we're in search mode
   const isSearching = query && query.trim() !== '';
 
@@ -47,14 +49,16 @@ function TableMembers({
               : "Selecciona un jefe de familia"}
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<FaPlus />}
-          onClick={openCreateMember}
-          disabled={!selectedFamily || isSearching}
-        >
-          Nuevo miembro
-        </Button>
+        {isAdmin && (
+          <Button
+            variant="contained"
+            startIcon={<FaPlus />}
+            onClick={openCreateMember}
+            disabled={!selectedFamily || isSearching}
+          >
+            Nuevo miembro
+          </Button>
+        )}
       </Box>
 
       <Box sx={{ height: 400, overflow: 'auto' }}>
@@ -74,12 +78,16 @@ function TableMembers({
               <TableCell>{member.documentId ?? ""}</TableCell>
               {isSearching && <TableCell>{member.familyHeadName ?? ""}</TableCell>}
               <TableCell align="right">
-                <IconButton size="small" onClick={() => openEditMember(member)}>
-                  <FaEdit />
-                </IconButton>
-                <IconButton size="small" onClick={() => openDeleteMember(member)}>
-                  <FaRegTrashAlt />
-                </IconButton>
+                {isAdmin && (
+                  <>
+                    <IconButton size="small" onClick={() => openEditMember(member)}>
+                      <FaEdit />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => openDeleteMember(member)}>
+                      <FaRegTrashAlt />
+                    </IconButton>
+                  </>
+                )}
               </TableCell>
             </TableRow>
           ))}

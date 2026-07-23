@@ -14,6 +14,7 @@ import {
 /* ----------------- hooks ----------------- */
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { LinearProgress } from "@mui/material";
+import { useAuth } from "../../../hooks/useAuth";
 /* ----------------- icons ----------------- */
 import { FaWallet, FaFileCsv, FaPlus } from "react-icons/fa";
 /* ----------------- utils ----------------- */
@@ -44,6 +45,7 @@ const emptyFinanceForm = {
 };
 
 function Finances() {
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [filterType, setFilterType] = useState("todos");
   const [timePeriod, setTimePeriod] = useState("all");
@@ -294,13 +296,15 @@ function Finances() {
             >
               Exportar
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<FaPlus />}
-              onClick={() => setOpenModal(true)}
-            >
-              Nuevo Registro
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="contained"
+                startIcon={<FaPlus />}
+                onClick={() => setOpenModal(true)}
+              >
+                Nuevo Registro
+              </Button>
+            )}
           </Box>
         </Box>
         <Box className="grid grid-cols-1 sm:grid-cols-3 gap-5">

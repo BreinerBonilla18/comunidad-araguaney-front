@@ -12,8 +12,10 @@ import {
 } from "@mui/material";
 import { useMemo } from "react";
 import { FaUserMinus } from "react-icons/fa";
+import { useAuth } from "../../../../hooks/useAuth";
 
 function TableSpokepersons({ spokepersons, onRemove, loading }) {
+  const { isAdmin } = useAuth();
   const sortedSpokepersons = useMemo(() => {
     return [...spokepersons].sort((a, b) => {
       if (a.rank === "main" && b.rank !== "main") return -1;
@@ -54,15 +56,17 @@ function TableSpokepersons({ spokepersons, onRemove, loading }) {
                   />
               </TableCell>
               <TableCell align="center">
-                <Tooltip title="Desasignar Vocero">
-                  <IconButton
-                    color="error"
-                    onClick={() => onRemove(spokeperson)}
-                    disabled={loading}
-                  >
-                    <FaUserMinus size={18} />
-                  </IconButton>
-                </Tooltip>
+                {isAdmin && (
+                  <Tooltip title="Desasignar Vocero">
+                    <IconButton
+                      color="error"
+                      onClick={() => onRemove(spokeperson)}
+                      disabled={loading}
+                    >
+                      <FaUserMinus size={18} />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </TableCell>
             </TableRow>
           )})}

@@ -7,8 +7,8 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-/* ----------------- hooks ----------------- */
 import { useState, useMemo, useEffect, useCallback } from "react";
+import { useAuth } from "../../../hooks/useAuth";
 /* ----------------- icons ----------------- */
 import { FaHandHoldingHeart, FaPlay, FaStop } from "react-icons/fa";
 /* ----------------- utils ----------------- */
@@ -28,6 +28,7 @@ import ConfirmDeliveryModal from "./modals/ConfirmDeliveryModal";
 import EndBenefitDayModal from "./modals/EndBenefitDayModal";
 
 function SocialBenefits() {
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [isJornadaActive, setIsJornadaActive] = useState(false);
   const [benefitType, setBenefitType] = useState("");
@@ -159,23 +160,25 @@ function SocialBenefits() {
             </Typography>
           </Box>
 
-          {!isJornadaActive ? (
-            <Button
-              variant="contained"
-              startIcon={<FaPlay />}
-              onClick={() => setOpenStartModal(true)}
-            >
-              Iniciar Jornada
-            </Button>
-          ) : (
-            <Button
-              variant="contained"
-              color="error"
-              startIcon={<FaStop />}
-              onClick={handleEndJornada}
-            >
-              Finalizar Jornada
-            </Button>
+          {isAdmin && (
+            !isJornadaActive ? (
+              <Button
+                variant="contained"
+                startIcon={<FaPlay />}
+                onClick={() => setOpenStartModal(true)}
+              >
+                Iniciar Jornada
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<FaStop />}
+                onClick={handleEndJornada}
+              >
+                Finalizar Jornada
+              </Button>
+            )
           )}
         </Box>
 

@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 /* ----------------- hooks ----------------- */
 import { useState, useMemo, useEffect, useCallback } from "react";
-/* ----------------- icons ----------------- */
+import { useAuth } from "../../../hooks/useAuth";
 import { FaChalkboardTeacher, FaPlus } from "react-icons/fa";
 /* ----------------- API ----------------- */
 import {
@@ -29,6 +29,7 @@ import ModalSuccess from "../../../modals/ModalSucces";
 import ModalError from "../../../modals/ModalError";
 
 function Spokepersons() {
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [spokepersons, setSpokepersons] = useState([]);
@@ -176,13 +177,15 @@ function Spokepersons() {
           </Box>
 
           <Box className="flex flex-wrap gap-2">
-            <Button
-              variant="contained"
-              startIcon={<FaPlus />}
-              onClick={handleOpenModal}
-            >
-              Asignar Nuevo Vocero
-            </Button>
+            {isAdmin && (
+              <Button
+                variant="contained"
+                startIcon={<FaPlus />}
+                onClick={handleOpenModal}
+              >
+                Asignar Nuevo Vocero
+              </Button>
+            )}
           </Box>
         </Box>
 
