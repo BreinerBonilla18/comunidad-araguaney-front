@@ -22,6 +22,7 @@ import {
   validateBirthDateForHead,
   validateFullName,
   validateAddress,
+  validatePhone,
 } from "../../../../utils/functions";
 
 function FamilyHeadManagement({
@@ -40,6 +41,7 @@ function FamilyHeadManagement({
   const birthDateError = validateBirthDateForHead(headForm.birthDate);
   const addressError = validateAddress(headForm.address);
   const nationalityError = !headForm.nationality ? "Este campo es requerido" : "";
+  const phoneError = validatePhone(headForm.phone);
 
   const hasErrors =
     !!fullNameError ||
@@ -47,7 +49,8 @@ function FamilyHeadManagement({
     !!genderError ||
     !!birthDateError ||
     !!addressError ||
-    !!nationalityError;
+    !!nationalityError ||
+    !!phoneError;
 
   return (
     <Dialog
@@ -106,10 +109,12 @@ function FamilyHeadManagement({
           <TextField
             label="Teléfono"
             value={headForm.phone}
-            onChange={(e) =>
-              setHeadForm((p) => ({ ...p, phone: e.target.value }))
-            }
-            
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+              setHeadForm((p) => ({ ...p, phone: value }));
+            }}
+            error={!!phoneError}
+            helperText={phoneError || ""}
             fullWidth
           />
           <TextField
@@ -123,6 +128,7 @@ function FamilyHeadManagement({
             fullWidth
             required
           />
+
           <FormControl fullWidth error={!!genderError}>
             <InputLabel id="head-gender-label">Género</InputLabel>
             <Select
@@ -144,43 +150,6 @@ function FamilyHeadManagement({
             </Select>
             {!!genderError && <FormHelperText>{genderError}</FormHelperText>}
           </FormControl>
-          <FormGroup row>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={headForm.is_pregnant}
-                  disabled={headForm.gender !== "Femenino"}
-                  onChange={(e) =>
-                    setHeadForm((p) => ({ ...p, is_pregnant: e.target.checked }))
-                  }
-                />
-              }
-              label="Embarazada"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={headForm.is_lactating}
-                  disabled={headForm.gender !== "Femenino"}
-                  onChange={(e) =>
-                    setHeadForm((p) => ({ ...p, is_lactating: e.target.checked }))
-                  }
-                />
-              }
-              label="Lactando"
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={headForm.is_disabled}
-                  onChange={(e) =>
-                    setHeadForm((p) => ({ ...p, is_disabled: e.target.checked }))
-                  }
-                />
-              }
-              label="Discapacitado/a"
-            />
-          </FormGroup>
           <DatePicker
             label="Fecha de nacimiento"
             value={headForm.birthDate ? dayjs(headForm.birthDate) : null}
@@ -199,6 +168,32 @@ function FamilyHeadManagement({
               },
             }}
           />
+
+          <FormGroup row>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={headForm.is_pregnant}
+                  disabled={headForm.gender !== "Femenino"}
+                  onChange={(e) =>
+                    setHeadForm((p) => ({ ...p, is_pregnant: e.target.checked }))
+                  }
+                />
+              }
+              label="Embarazada"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={headForm.is_disabled}
+                  onChange={(e) =>
+                    setHeadForm((p) => ({ ...p, is_disabled: e.target.checked }))
+                  }
+                />
+              }
+              label="Discapacitado/a"
+            />
+          </FormGroup>
         </Box>
       </DialogContent>
       <DialogActions>

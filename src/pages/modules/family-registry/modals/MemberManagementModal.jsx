@@ -21,6 +21,8 @@ import {
   normalizeText,
   validateBirthDate,
   validateFullName,
+  validatePhone,
+  getAgeInYears,
 } from "../../../../utils/functions";
 
 function MemberManagementModal({
@@ -37,13 +39,17 @@ function MemberManagementModal({
     : "";
   const birthDateError = validateBirthDate(memberForm.birthDate);
   const nationalityError = !memberForm.nationality ? "Este campo es requerido" : "";
+  const phoneError = validatePhone(memberForm.phone);
+  const ageInYears = getAgeInYears(memberForm.birthDate);
+  const isLactatingDisabled = !memberForm.birthDate || ageInYears === null || ageInYears > 2;
 
   const hasErrors =
     !!fullNameError ||
     !!documentIdError ||
     !!genderError ||
     !!birthDateError ||
-    !!nationalityError;
+    !!nationalityError ||
+    !!phoneError;
 
   return (
     <Dialog
@@ -99,10 +105,31 @@ function MemberManagementModal({
           <TextField
             label="Teléfono"
             value={memberForm.phone}
-            onChange={(e) =>
-              setMemberForm((p) => ({ ...p, phone: e.target.value }))
-            }
+            onChange={(e) => {
+              const value = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+              setMemberForm((p) => ({ ...p, phone: value }));
+            }}
+            error={!!phoneError}
+            helperText={phoneError || ""}
             fullWidth
+          />
+                    <DatePicker
+            label="Fecha de nacimiento"
+            value={memberForm.birthDate ? dayjs(memberForm.birthDate) : null}
+            onChange={(newValue) =>
+              setMemberForm((p) => ({
+                ...p,
+                birthDate: newValue ? newValue.format("YYYY-MM-DD") : "",
+              }))
+            }
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                required: true,
+                error: !!birthDateError,
+                helperText: birthDateError || "",
+              },
+            }}
           />
           <FormControl fullWidth error={!!genderError}>
             <InputLabel id="member-gender-label">Género</InputLabel>
@@ -142,13 +169,13 @@ function MemberManagementModal({
               control={
                 <Checkbox
                   checked={memberForm.is_lactating}
-                  disabled={memberForm.gender !== "Femenino"}
+                  disabled={isLactatingDisabled}
                   onChange={(e) =>
                     setMemberForm((p) => ({ ...p, is_lactating: e.target.checked }))
                   }
                 />
               }
-              label="Lactando"
+              label="Lactante"
             />
             <FormControlLabel
               control={
@@ -162,24 +189,6 @@ function MemberManagementModal({
               label="Discapacitado/a"
             />
           </FormGroup>
-          <DatePicker
-            label="Fecha de nacimiento"
-            value={memberForm.birthDate ? dayjs(memberForm.birthDate) : null}
-            onChange={(newValue) =>
-              setMemberForm((p) => ({
-                ...p,
-                birthDate: newValue ? newValue.format("YYYY-MM-DD") : "",
-              }))
-            }
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                required: true,
-                error: !!birthDateError,
-                helperText: birthDateError || "",
-              },
-            }}
-          />
         </Box>
       </DialogContent>
       <DialogActions>

@@ -107,6 +107,38 @@ export function validateEstimatedCost(value) {
   return "";
 }
 
+export function validatePhone(value) {
+  const v = normalizeText(value);
+  if (!v) return ""; // Phone is optional
+  
+  const digitsOnly = v.replace(/\D/g, "");
+  if (digitsOnly.length > 11) return "Máximo 11 dígitos";
+  
+  return "";
+}
+
+export function getAgeInYears(birthDate) {
+  const date = new Date(birthDate);
+  if (isNaN(date.getTime())) return null;
+  
+  const now = new Date();
+  const age = now.getFullYear() - date.getFullYear();
+  const monthDiff = now.getMonth() - date.getMonth();
+  const ageInYears = monthDiff < 0 || (monthDiff === 0 && now.getDate() < date.getDate()) ? age - 1 : age;
+  
+  return ageInYears;
+}
+
+export function validateIsLactating(isLactating, birthDate) {
+  if (!isLactating) return "";
+  
+  const ageInYears = getAgeInYears(birthDate);
+  if (ageInYears === null) return "Fecha de nacimiento inválida";
+  if (ageInYears > 2) return "Solo se permite para menores de 2 años";
+  
+  return "";
+}
+
 export function formatDate(dateString) {
   if (!dateString) return "";
   
